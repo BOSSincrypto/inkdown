@@ -81,22 +81,36 @@
       "dist-electron/**/*"
     ],
     "win": {
-      "target": ["nsis", "portable"],
-      "icon": "resources/icon.ico"
-    },
-        "linux": {
-          "target": ["AppImage", "deb"],
-          "icon": "resources/icon.png",
-          "category": "Office",
-          "maintainer": "rohandevin5@outlook.com"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
         },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "resources/icon.ico",
+      "artifactName": "${productName}-${version}-${os}-${arch}-${target}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "resources/icon.png",
+      "category": "Office",
+      "maintainer": "rohandevin5@outlook.com"
+    },
     "mac": {
       "target": ["dmg"],
       "icon": "resources/icon.icns"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName}-${version}-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-Portable.${ext}"
     }
   }
 }
