@@ -1,0 +1,312 @@
+.editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--editor-bg);
+}
+
+.editor-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+
+.editor-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.inkdown-editor-content {
+  outline: none;
+  font-family: var(--font-editor);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-primary);
+  caret-color: var(--accent-color);
+  min-height: 300px;
+}
+
+.inkdown-editor-content > *:first-child {
+  margin-top: 0;
+}
+
+/* Headings */
+.inkdown-editor-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1.5em 0 0.5em;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.3em;
+}
+
+.inkdown-editor-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 1.4em 0 0.5em;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.2em;
+}
+
+.inkdown-editor-content h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 1.3em 0 0.4em;
+  line-height: 1.3;
+}
+
+.inkdown-editor-content h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 1.2em 0 0.4em;
+}
+
+.inkdown-editor-content h5,
+.inkdown-editor-content h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 1em 0 0.3em;
+  color: var(--text-secondary);
+}
+
+/* Paragraphs */
+.inkdown-editor-content p {
+  margin: 0.8em 0;
+}
+
+/* Links */
+.inkdown-editor-content .editor-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.inkdown-editor-content .editor-link:hover {
+  border-bottom-color: var(--accent-color);
+}
+
+/* Bold, Italic */
+.inkdown-editor-content strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.inkdown-editor-content em {
+  font-style: italic;
+}
+
+/* Code */
+.inkdown-editor-content code {
+  background: var(--code-bg);
+  color: var(--code-color);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.inkdown-editor-content pre {
+  background: var(--code-block-bg);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 1em 0;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+.inkdown-editor-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+/* Blockquote */
+.inkdown-editor-content blockquote {
+  border-left: 4px solid var(--accent-color);
+  margin: 1em 0;
+  padding: 0.5em 0 0.5em 1em;
+  color: var(--text-secondary);
+  background: var(--blockquote-bg);
+  border-radius: 0 4px 4px 0;
+}
+
+.inkdown-editor-content blockquote p {
+  margin: 0.3em 0;
+}
+
+/* Lists */
+.inkdown-editor-content ul,
+.inkdown-editor-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.inkdown-editor-content li {
+  margin: 0.25em 0;
+}
+
+.inkdown-editor-content li p {
+  margin: 0.2em 0;
+}
+
+/* Task Lists */
+.inkdown-editor-content ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.inkdown-editor-content ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.inkdown-editor-content ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.inkdown-editor-content ul[data-type="taskList"] li > label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--accent-color);
+  width: 16px;
+  height: 16px;
+}
+
+.inkdown-editor-content ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* Horizontal Rule */
+.inkdown-editor-content hr {
+  border: none;
+  border-top: 2px solid var(--border-color);
+  margin: 2em 0;
+}
+
+/* Images */
+.inkdown-editor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1em 0;
+}
+
+/* Tables */
+.inkdown-editor-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.inkdown-editor-content th,
+.inkdown-editor-content td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+  min-width: 80px;
+}
+
+.inkdown-editor-content th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+}
+
+.inkdown-editor-content td {
+  background: var(--editor-bg);
+}
+
+/* Highlight */
+.inkdown-editor-content mark {
+  background: var(--highlight-bg);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* Placeholder */
+.inkdown-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-muted);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* Selection */
+.inkdown-editor-content ::selection {
+  background: var(--selection-bg);
+}
+
+/* Source Mode */
+.source-mode {
+  padding: 0;
+}
+
+.source-editor {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 40px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: var(--editor-bg);
+  tab-size: 2;
+  max-width: 800px;
+  margin: 0 auto;
+  display: block;
+  box-sizing: border-box;
+}
+
+.source-editor::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Syntax highlighting */
+.inkdown-editor-content pre .hljs-comment,
+.inkdown-editor-content pre .hljs-quote {
+  color: var(--syntax-comment);
+}
+
+.inkdown-editor-content pre .hljs-keyword,
+.inkdown-editor-content pre .hljs-selector-tag {
+  color: var(--syntax-keyword);
+}
+
+.inkdown-editor-content pre .hljs-string,
+.inkdown-editor-content pre .hljs-addition {
+  color: var(--syntax-string);
+}
+
+.inkdown-editor-content pre .hljs-number,
+.inkdown-editor-content pre .hljs-literal {
+  color: var(--syntax-number);
+}
+
+.inkdown-editor-content pre .hljs-title,
+.inkdown-editor-content pre .hljs-section {
+  color: var(--syntax-function);
+}
+
+.inkdown-editor-content pre .hljs-built_in {
+  color: var(--syntax-builtin);
+}
+
+.inkdown-editor-content pre .hljs-attr,
+.inkdown-editor-content pre .hljs-attribute {
+  color: var(--syntax-attr);
+}
