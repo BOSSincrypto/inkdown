@@ -1,0 +1,191 @@
+/* InkDown — Global Styles & Theme System */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
+}
+
+/* ===== LIGHT THEME ===== */
+:root,
+[data-theme="light"] {
+  /* Fonts */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-editor: 'Merriweather', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+
+  /* Base colors */
+  --app-bg: #ffffff;
+  --editor-bg: #ffffff;
+  --sidebar-bg: #f7f8fa;
+  --toolbar-bg: #fbfbfc;
+  --titlebar-bg: #f0f1f3;
+  --statusbar-bg: #f7f8fa;
+
+  /* Text */
+  --text-primary: #1a1a2e;
+  --text-secondary: #5c6370;
+  --text-muted: #a0a4b0;
+
+  /* Accent */
+  --accent-color: #4a6cf7;
+  --accent-hover: #3955d4;
+
+  /* Borders */
+  --border-color: #e8eaed;
+
+  /* Interactive */
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --active-bg: rgba(74, 108, 247, 0.1);
+  --selection-bg: rgba(74, 108, 247, 0.2);
+
+  /* Code */
+  --code-bg: #f3f4f6;
+  --code-color: #d63384;
+  --code-block-bg: #f8f9fb;
+
+  /* Blockquote */
+  --blockquote-bg: rgba(74, 108, 247, 0.04);
+
+  /* Table */
+  --table-header-bg: #f3f4f6;
+
+  /* Highlight */
+  --highlight-bg: #fff3bf;
+
+  /* Folder */
+  --folder-color: #e8a838;
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-hover: rgba(0, 0, 0, 0.25);
+
+  /* Syntax highlighting */
+  --syntax-comment: #6a737d;
+  --syntax-keyword: #d73a49;
+  --syntax-string: #032f62;
+  --syntax-number: #005cc5;
+  --syntax-function: #6f42c1;
+  --syntax-builtin: #e36209;
+  --syntax-attr: #005cc5;
+}
+
+/* ===== DARK THEME ===== */
+[data-theme="dark"] {
+  --app-bg: #1e1e2e;
+  --editor-bg: #1e1e2e;
+  --sidebar-bg: #181825;
+  --toolbar-bg: #1e1e2e;
+  --titlebar-bg: #11111b;
+  --statusbar-bg: #181825;
+
+  --text-primary: #cdd6f4;
+  --text-secondary: #a6adc8;
+  --text-muted: #585b70;
+
+  --accent-color: #89b4fa;
+  --accent-hover: #74c7ec;
+
+  --border-color: #313244;
+
+  --hover-bg: rgba(255, 255, 255, 0.06);
+  --active-bg: rgba(137, 180, 250, 0.12);
+  --selection-bg: rgba(137, 180, 250, 0.25);
+
+  --code-bg: rgba(255, 255, 255, 0.06);
+  --code-color: #f38ba8;
+  --code-block-bg: #181825;
+
+  --blockquote-bg: rgba(137, 180, 250, 0.05);
+
+  --table-header-bg: #181825;
+
+  --highlight-bg: rgba(249, 226, 175, 0.2);
+
+  --folder-color: #fab387;
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-hover: rgba(255, 255, 255, 0.2);
+
+  --syntax-comment: #6c7086;
+  --syntax-keyword: #cba6f7;
+  --syntax-string: #a6e3a1;
+  --syntax-number: #fab387;
+  --syntax-function: #89b4fa;
+  --syntax-builtin: #f9e2af;
+  --syntax-attr: #89dceb;
+}
+
+/* App Layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--app-bg);
+  overflow: hidden;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Focus Mode */
+.app.focus-mode .editor-scroll {
+  padding: 60px 20px;
+}
+
+.app.focus-mode .editor-wrapper {
+  max-width: 700px;
+}
+
+/* Transitions */
+.sidebar,
+.toolbar,
+.statusbar {
+  transition: opacity 0.2s ease;
+}
+
+/* Selection */
+::selection {
+  background: var(--selection-bg);
+}
