@@ -75,12 +75,12 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 
-  mainWindow.webContents.on('did-finish-load', () => {
+  mainWindow.webContents.once('did-finish-load', () => {
     const fileToOpen = pendingFilePath || extractFileArg(process.argv)
     if (fileToOpen) {
       openFileInWindow(fileToOpen)
-      pendingFilePath = null
     }
+    pendingFilePath = null
   })
 
   mainWindow.on('closed', () => {
