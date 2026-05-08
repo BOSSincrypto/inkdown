@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "InkDown — The open-source WYSIWYG markdown editor. A beautiful, fast, and resource-efficient alternative to Typora.",
   "main": "dist-electron/main.js",
-  "author": "InkDown Contributors",
+  "author": {
+    "name": "InkDown Contributors",
+    "email": "rohandevin5@outlook.com"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -81,11 +84,12 @@
       "target": ["nsis", "portable"],
       "icon": "resources/icon.ico"
     },
-    "linux": {
-      "target": ["AppImage", "deb"],
-      "icon": "resources/icon.png",
-      "category": "Office"
-    },
+        "linux": {
+          "target": ["AppImage", "deb"],
+          "icon": "resources/icon.png",
+          "category": "Office",
+          "maintainer": "rohandevin5@outlook.com"
+        },
     "mac": {
       "target": ["dmg"],
       "icon": "resources/icon.icns"
