@@ -1,6 +1,6 @@
 {
   "name": "inkdown",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "InkDown — The open-source WYSIWYG markdown editor. A beautiful, fast, and resource-efficient alternative to Typora.",
   "main": "dist-electron/main.js",
   "author": {
@@ -79,6 +79,20 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown File",
+        "description": "Markdown Document",
+        "role": "Editor"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown File",
+        "description": "Markdown Document",
+        "role": "Editor"
+      }
     ],
     "win": {
       "target": [

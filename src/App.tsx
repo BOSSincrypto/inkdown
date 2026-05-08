@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar/Sidebar'
 import Editor from './components/Editor/Editor'
 import Toolbar from './components/Toolbar/Toolbar'
 import StatusBar from './components/StatusBar/StatusBar'
+import ContextMenu from './components/ContextMenu/ContextMenu'
 import type { Editor as TiptapEditor } from '@tiptap/core'
 
 type Theme = 'light' | 'dark'
@@ -28,6 +29,7 @@ function App() {
   const [charCount, setCharCount] = useState(0)
 
   const editorRef = useRef<TiptapEditor | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -208,6 +210,18 @@ function App() {
     setIsModified(true)
   }, [])
 
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleContextFormat = useCallback(
+    (format: string) => {
+      handleFormat(null, format)
+    },
+    [handleFormat]
+  )
+
   // Register Electron menu listeners
   useEffect(() => {
     if (!api) return
@@ -267,7 +281,7 @@ function App() {
         />
       )}
 
-      <div className="app-body">
+      <div className="app-body" onContextMenu={handleContextMenu}>
         {sidebarOpen && !focusMode && (
           <Sidebar
             folderPath={folderPath}
@@ -287,6 +301,17 @@ function App() {
           onSourceChange={handleSourceChange}
         />
       </div>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onFormat={handleContextFormat}
+          onToggleSidebar={toggleSidebar}
+          onToggleSource={toggleSourceMode}
+        />
+      )}
 
       {!focusMode && (
         <StatusBar
