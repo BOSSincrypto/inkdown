@@ -5,6 +5,51 @@ import fs from 'fs'
 let mainWindow: BrowserWindow | null = null
 const recentFiles: string[] = []
 const MAX_RECENT = 10
+let pendingFilePath: string | null = null
+
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+}
+
+app.on('second-instance', (_event, argv) => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+    const filePath = extractFileArg(argv)
+    if (filePath) openFileInWindow(filePath)
+  }
+})
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault()
+  if (mainWindow) {
+    openFileInWindow(filePath)
+  } else {
+    pendingFilePath = filePath
+  }
+})
+
+function extractFileArg(argv: string[]): string | null {
+  const args = argv.slice(process.defaultApp ? 2 : 1)
+  for (const arg of args) {
+    if (arg.startsWith('-')) continue
+    const ext = path.extname(arg).toLowerCase()
+    if (['.md', '.markdown', '.mdown', '.mkd', '.txt'].includes(ext)) {
+      if (fs.existsSync(arg)) return path.resolve(arg)
+    }
+  }
+  return null
+}
+
+function openFileInWindow(filePath: string): void {
+  if (!mainWindow) return
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8')
+    addToRecent(filePath)
+    mainWindow.webContents.send('file:opened', { filePath, content })
+  } catch { /* ignore read errors */ }
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -29,6 +74,14 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    const fileToOpen = pendingFilePath || extractFileArg(process.argv)
+    if (fileToOpen) {
+      openFileInWindow(fileToOpen)
+      pendingFilePath = null
+    }
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -202,7 +255,7 @@ function buildAppMenu(): void {
             dialog.showMessageBox({
               type: 'info',
               title: 'About InkDown',
-              message: 'InkDown v1.0.0',
+              message: 'InkDown v1.1.0',
               detail:
                 'The open-source WYSIWYG markdown editor.\nBuilt with Electron, React, and Tiptap.\n\nhttps://github.com/BOSSincrypto/inkdown',
             })
