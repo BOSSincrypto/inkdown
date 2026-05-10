@@ -37,7 +37,7 @@ InkDown is a beautiful, fast, and resource-efficient markdown editor — a free 
 
 ## Screenshots
 
-*Coming soon*
+<img width="1400" height="923" alt="export4995E69E-1E1B-45DD-A522-A027F61987DA" src="https://github.com/user-attachments/assets/54ad1aef-726e-49d8-a399-e48b4c4f4027" />
 
 ## Installation
 
