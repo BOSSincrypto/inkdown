@@ -26,12 +26,17 @@ declare global {
       folderPath: string
     ) => Promise<{ success: boolean; tree?: FileTreeNode[]; error?: string }>
     getRecentFiles: () => Promise<string[]>
+    getPlatform: () => Promise<string>
+    openExternal: (url: string) => Promise<void>
     exportPDF: (
       htmlContent: string
     ) => Promise<{ success: boolean; filePath?: string; error?: string }>
     exportHTML: (
       htmlContent: string
     ) => Promise<{ success: boolean; filePath?: string; error?: string }>
+    editCut: () => void
+    editCopy: () => void
+    editPaste: () => void
     minimizeWindow: () => void
     maximizeWindow: () => void
     closeWindow: () => void

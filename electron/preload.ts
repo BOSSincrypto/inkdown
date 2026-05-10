@@ -13,9 +13,15 @@ const electronAPI = {
   readFolder: (folderPath: string) => ipcRenderer.invoke('folder:read', folderPath),
 
   getRecentFiles: () => ipcRenderer.invoke('app:get-recent-files'),
+  getPlatform: () => ipcRenderer.invoke('app:get-platform'),
+  openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
 
   exportPDF: (htmlContent: string) => ipcRenderer.invoke('export:pdf', htmlContent),
   exportHTML: (htmlContent: string) => ipcRenderer.invoke('export:html', htmlContent),
+
+  editCut: () => ipcRenderer.send('edit:cut'),
+  editCopy: () => ipcRenderer.send('edit:copy'),
+  editPaste: () => ipcRenderer.send('edit:paste'),
 
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),

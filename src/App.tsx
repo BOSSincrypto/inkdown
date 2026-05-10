@@ -18,6 +18,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
   const [sourceMode, setSourceMode] = useState(false)
+  const [platform, setPlatform] = useState('win32')
 
   const [currentFile, setCurrentFile] = useState<string | null>(null)
   const [content, setContent] = useState('')
@@ -30,6 +31,15 @@ function App() {
 
   const editorRef = useRef<TiptapEditor | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    api?.getPlatform().then((p) => {
+      setPlatform(p)
+      if (p === 'darwin') {
+        document.documentElement.classList.add('platform-darwin')
+      }
+    })
+  }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -158,6 +168,15 @@ function App() {
         case 'h3':
           editor.chain().focus().toggleHeading({ level: 3 }).run()
           break
+        case 'h4':
+          editor.chain().focus().toggleHeading({ level: 4 }).run()
+          break
+        case 'h5':
+          editor.chain().focus().toggleHeading({ level: 5 }).run()
+          break
+        case 'h6':
+          editor.chain().focus().toggleHeading({ level: 6 }).run()
+          break
         case 'code':
           editor.chain().focus().toggleCode().run()
           break
@@ -202,6 +221,88 @@ function App() {
       }
     },
     []
+  )
+
+  const handleMenuAction = useCallback(
+    (action: string) => {
+      if (action.startsWith('format:')) {
+        handleFormat(null, action.slice(7))
+        return
+      }
+      switch (action) {
+        case 'new-file':
+          handleNewFile()
+          break
+        case 'open-file':
+          api?.openFile()
+          break
+        case 'open-folder':
+          api?.openFolder()
+          break
+        case 'save':
+          handleSave()
+          break
+        case 'save-as':
+          handleSaveAs()
+          break
+        case 'export-html':
+          handleExport(null, 'html')
+          break
+        case 'export-pdf':
+          handleExport(null, 'pdf')
+          break
+        case 'close-window':
+          api?.closeWindow()
+          break
+        case 'toggle-sidebar':
+          toggleSidebar()
+          break
+        case 'toggle-source':
+          toggleSourceMode()
+          break
+        case 'focus-mode':
+          toggleFocusMode()
+          break
+        case 'toggle-theme':
+          toggleTheme()
+          break
+        case 'find':
+          break
+        case 'clear-format':
+          editorRef.current?.chain().focus().clearNodes().unsetAllMarks().run()
+          break
+        case 'undo':
+          editorRef.current?.chain().focus().undo().run()
+          break
+        case 'redo':
+          editorRef.current?.chain().focus().redo().run()
+          break
+        case 'cut':
+          if (api?.editCut) api.editCut()
+          else document.execCommand('cut')
+          break
+        case 'copy':
+          if (api?.editCopy) api.editCopy()
+          else document.execCommand('copy')
+          break
+        case 'paste':
+          if (api?.editPaste) api.editPaste()
+          else navigator.clipboard.readText().then(text => {
+            editorRef.current?.chain().focus().insertContent(text).run()
+          }).catch(() => {})
+          break
+        case 'select-all':
+          editorRef.current?.chain().focus().selectAll().run()
+          break
+        case 'about':
+          alert('InkDown v1.1.1\nThe open-source WYSIWYG markdown editor.\n\nhttps://github.com/BOSSincrypto/inkdown')
+          break
+        case 'github':
+          api?.openExternal('https://github.com/BOSSincrypto/inkdown')
+          break
+      }
+    },
+    [handleNewFile, handleSave, handleSaveAs, handleExport, handleFormat, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme]
   )
 
   const handleSourceChange = useCallback((newMarkdown: string) => {
@@ -270,6 +371,8 @@ function App() {
         fileName={fileName}
         isModified={isModified}
         theme={theme}
+        platform={platform}
+        onMenuAction={handleMenuAction}
       />
 
       {!focusMode && (

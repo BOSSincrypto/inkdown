@@ -2,23 +2,37 @@
 
 **The open-source WYSIWYG markdown editor you deserve.**
 
-InkDown is a beautiful, fast, and resource-efficient markdown editor — a free and open-source alternative to Typora. Write in markdown with a seamless live preview that renders your content as you type.
+InkDown is a beautiful, fast, and resource-efficient markdown editor — a free and open-source alternative to Typora. Write in markdown with a seamless live preview that renders your content as you type. Available for **Windows**, **macOS**, and **Linux**.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/BOSSincrypto/inkdown)](https://github.com/BOSSincrypto/inkdown/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/BOSSincrypto/inkdown/releases)
 
 ---
+
+## Why InkDown?
+
+- **Free & Open Source** — No license fees, no subscriptions, no telemetry
+- **Typora-like Experience** — WYSIWYG markdown editing with real-time rendering
+- **Cross-Platform** — Native apps for Windows, macOS, and Linux
+- **Lightweight** — Optimized for minimal memory and CPU usage
+- **Privacy First** — Fully offline, no analytics, your data stays on your device
 
 ## Features
 
 - **WYSIWYG Markdown Editing** — Type markdown and see it rendered instantly. No split panes, no context switching.
+- **Menu Bar** — Full menu bar (File, Edit, Paragraph, Format, View, Help) with all editor actions and keyboard shortcuts, like Typora.
 - **Source Mode** — Toggle to raw markdown source view with a single shortcut (`Ctrl+/`).
 - **File Explorer** — Built-in sidebar with folder tree navigation for managing your markdown files.
 - **Dark & Light Themes** — Beautiful Catppuccin-inspired dark theme and a clean light theme.
 - **Focus Mode** — Distraction-free writing with `Ctrl+Shift+F`.
-- **Syntax Highlighting** — Code blocks with syntax highlighting for 30+ languages.
-- **Rich Formatting** — Headings, bold, italic, underline, strikethrough, highlight, blockquotes, lists, task lists, tables, images, links, horizontal rules, and more.
+- **Syntax Highlighting** — Code blocks with syntax highlighting for 30+ programming languages.
+- **Rich Formatting** — Headings (1–6), bold, italic, underline, strikethrough, highlight, blockquotes, ordered/unordered/task lists, tables, images, links, horizontal rules, and more.
 - **Export** — Export your documents to HTML or PDF.
 - **Keyboard Shortcuts** — Full set of keyboard shortcuts for power users.
-- **Cross-Platform** — Built with Electron for Windows (Linux and macOS coming soon).
-- **Resource Efficient** — Optimized for minimal memory and CPU usage.
+- **Context Menu** — Right-click context menu with quick formatting actions.
+- **File Association** — Double-click `.md` files to open them directly in InkDown.
+- **Resource Efficient** — Optimized startup time and minimal resource consumption.
 - **Privacy First** — No telemetry, no analytics, fully offline.
 
 ## Screenshots
@@ -29,7 +43,11 @@ InkDown is a beautiful, fast, and resource-efficient markdown editor — a free 
 
 ### Download
 
-Download the latest release from the [Releases](https://github.com/BOSSincrypto/inkdown/releases) page.
+Download the latest release from the [Releases](https://github.com/BOSSincrypto/inkdown/releases) page:
+
+- **Windows**: `.exe` installer or portable version
+- **macOS**: `.dmg` disk image
+- **Linux**: `.AppImage` or `.deb` package
 
 ### Build from Source
 
@@ -38,14 +56,14 @@ Download the latest release from the [Releases](https://github.com/BOSSincrypto/
 git clone https://github.com/BOSSincrypto/inkdown.git
 cd inkdown
 
-# Install dependencies
-npm install
+# Install dependencies (requires pnpm)
+pnpm install
 
 # Run in development mode
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run electron:build
+pnpm run electron:build
 ```
 
 ## Keyboard Shortcuts
@@ -61,21 +79,22 @@ npm run electron:build
 | Italic | `Ctrl+I` |
 | Underline | `Ctrl+U` |
 | Strikethrough | `Ctrl+Shift+X` |
-| Heading 1 | `Ctrl+1` |
-| Heading 2 | `Ctrl+2` |
-| Heading 3 | `Ctrl+3` |
+| Heading 1–6 | `Ctrl+1` to `Ctrl+6` |
 | Code | `Ctrl+E` |
 | Code Block | `Ctrl+Shift+K` |
 | Blockquote | `Ctrl+Shift+Q` |
+| Hyperlink | `Ctrl+K` |
 | Toggle Sidebar | `Ctrl+\` |
 | Toggle Source Mode | `Ctrl+/` |
 | Focus Mode | `Ctrl+Shift+F` |
 | Toggle Dark Mode | `Ctrl+Shift+D` |
 | Find | `Ctrl+F` |
-| Zoom In | `Ctrl++` |
-| Zoom Out | `Ctrl+-` |
-| Reset Zoom | `Ctrl+0` |
+| Zoom In | `Ctrl+Shift+=` |
+| Zoom Out | `Ctrl+Shift+-` |
+| Reset Zoom | `Ctrl+Shift+9` |
 | Fullscreen | `F11` |
+
+> On macOS, use `Cmd` instead of `Ctrl`.
 
 ## Tech Stack
 
@@ -84,11 +103,10 @@ npm run electron:build
 - **[Tiptap](https://tiptap.dev/)** — Headless WYSIWYG editor framework (ProseMirror-based)
 - **[TypeScript](https://www.typescriptlang.org/)** — Type-safe JavaScript
 - **[Vite](https://vitejs.dev/)** — Lightning-fast build tool
+- **[pnpm](https://pnpm.io/)** — Fast, disk-efficient package manager
 
 ## Roadmap
 
-- [ ] Linux support
-- [ ] macOS support
 - [ ] Android support (via React Native or similar)
 - [ ] Plugin/extension system
 - [ ] Custom themes
@@ -121,4 +139,4 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-**InkDown** — Write beautifully. Open source.
+**InkDown** — Write beautifully. Open source. Free forever.
