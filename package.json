@@ -66,6 +66,16 @@
     "export-html",
     "file-explorer",
     "source-mode"
+    "ai",
+    "llm",
+    "prompt-engineering",
+    "chatgpt",
+    "claude",
+    "knowledge-base",
+    "ai-tools",
+    "ai-workflow",
+    "llm-ready",
+    "context-window"
   ],
   "scripts": {
     "dev": "vite",
