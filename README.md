@@ -161,6 +161,58 @@ Yes! InkDown is available as an `.AppImage` and `.deb` package for Linux.
 
 ---
 
+---
+
+## InkDown for AI Users & Prompt Engineers
+
+InkDown is the ideal editor for anyone working with AI tools like **ChatGPT**, **Claude**, **Gemini**, and other LLMs. Markdown is the universal language of AI — use InkDown to write, structure, and manage your AI workflows.
+
+### Why Markdown is Perfect for AI
+
+- **Prompt Engineering** — Structure your prompts with headings, lists, bold text, and code blocks to get better results from LLMs.
+- **LLM-Ready Documentation** — Write docs in markdown that AI agents can parse directly. Markdown is 80–90% more token-efficient than HTML for LLMs.
+- **Knowledge Base** — Build and maintain a personal knowledge base in `.md` files that you can feed directly to ChatGPT, Claude, or any RAG pipeline.
+- **Context Preparation** — Format and organize context windows for AI assistants before pasting into chat.
+- **AI Prompt Templates** — Create reusable prompt templates with markdown structure: role definitions, instructions, output formats.
+- **LLM Comments** — Use markdown comments (`<!-- LLM: instructions here -->`) to embed hidden guidance for AI agents without cluttering human-readable content.
+
+### Common AI Use Cases
+
+| Use Case | How InkDown Helps |
+|---|---|
+| Writing ChatGPT prompts | WYSIWYG formatting, clean export, no noise |
+| Building Claude project docs | Folder tree + `.md` files as knowledge base |
+| Prompt template library | File explorer to organize prompt collections |
+| LLM-ready documentation | Clean markdown output, perfect for `llms.txt` |
+| AI agent context files | Export to clean `.md` for RAG pipelines |
+| Daily notes for AI journaling | Focus mode + offline privacy |
+
+### InkDown + AI Workflow Example
+
+```markdown
+# System Prompt Template
+
+<!-- LLM: You are a helpful assistant. Use the context below. -->
+
+## Role
+You are an expert **[role]** specializing in **[domain]**.
+
+## Task
+> Describe the task clearly here.
+
+## Context
+- Key fact 1
+- Key fact 2
+
+## Output Format
+Respond with a structured markdown document including:
+1. Summary
+2. Details
+3. Action items
+```
+
+> **InkDown renders this beautifully** while keeping the raw markdown perfect for LLMs.
+
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
