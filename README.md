@@ -76,7 +76,7 @@ InkDown is a **free, open-source WYSIWYG markdown editor** built with Electron, 
 
 ## Screenshots
 
-<img width="1480" height="923" alt="InkDown - WYSIWYG Markdown Editor" src="https://github.com/user-attachments/assets/54ad1aef-726e-49d8-a399-e40b4c4f4027" />
+<img width="1480" height="923" alt="InkDown - WYSIWYG Markdown Editor" src="https://github.com/user-attachments/assets/30814f13-8677-4de6-b7d7-60e8f5dad84e" />
 
 ---
 
