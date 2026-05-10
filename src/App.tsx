@@ -277,11 +277,23 @@ function App() {
         case 'redo':
           editorRef.current?.chain().focus().redo().run()
           break
+        case 'cut':
+          document.execCommand('cut')
+          break
+        case 'copy':
+          document.execCommand('copy')
+          break
+        case 'paste':
+          document.execCommand('paste')
+          break
+        case 'select-all':
+          editorRef.current?.chain().focus().selectAll().run()
+          break
         case 'about':
           alert('InkDown v1.1.1\nThe open-source WYSIWYG markdown editor.\n\nhttps://github.com/BOSSincrypto/inkdown')
           break
         case 'github':
-          window.open('https://github.com/BOSSincrypto/inkdown', '_blank')
+          api?.openExternal('https://github.com/BOSSincrypto/inkdown')
           break
       }
     },

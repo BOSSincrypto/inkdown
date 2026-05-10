@@ -14,6 +14,7 @@ const electronAPI = {
 
   getRecentFiles: () => ipcRenderer.invoke('app:get-recent-files'),
   getPlatform: () => ipcRenderer.invoke('app:get-platform'),
+  openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
 
   exportPDF: (htmlContent: string) => ipcRenderer.invoke('export:pdf', htmlContent),
   exportHTML: (htmlContent: string) => ipcRenderer.invoke('export:html', htmlContent),

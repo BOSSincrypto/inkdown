@@ -94,7 +94,7 @@ const MENUS: MenuGroup[] = [
       { label: 'Hyperlink', shortcut: 'Ctrl+K', action: 'format:link' },
       { label: 'Image', action: 'format:image' },
       { type: 'separator' },
-      { label: 'Clear Format', shortcut: 'Ctrl+\\', action: 'clear-format' },
+      { label: 'Clear Format', action: 'clear-format' },
     ],
   },
   {

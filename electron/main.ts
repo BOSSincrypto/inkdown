@@ -500,6 +500,10 @@ ipcMain.handle('app:get-platform', () => {
   return process.platform
 })
 
+ipcMain.handle('app:open-external', async (_event, url: string) => {
+  await shell.openExternal(url)
+})
+
 ipcMain.handle('export:pdf', async (_event, htmlContent: string) => {
   if (!mainWindow) return { success: false, error: 'No window' }
   const result = await dialog.showSaveDialog(mainWindow, {
