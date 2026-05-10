@@ -7,7 +7,7 @@ Thank you for your interest in contributing to InkDown! This guide will help you
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 18.x
-- [npm](https://www.npmjs.com/) >= 9.x
+- [pnpm](https://pnpm.io/) >= 10.x
 - [Git](https://git-scm.com/)
 
 ### Getting Started
@@ -18,10 +18,10 @@ git clone https://github.com/BOSSincrypto/inkdown.git
 cd inkdown
 
 # Install dependencies
-npm install
+pnpm install
 
 # Start the development server
-npm run dev
+pnpm run dev
 ```
 
 ### Project Structure
@@ -39,6 +39,8 @@ inkdown/
 │   │   ├── Sidebar/    # File tree explorer
 │   │   ├── Toolbar/    # Formatting toolbar
 │   │   ├── TitleBar/   # Custom window title bar
+│   │   ├── MenuBar/   # In-app menu bar (File, Edit, etc.)
+│   │   ├── ContextMenu/ # Right-click context menu
 │   │   └── StatusBar/  # Bottom status bar
 │   ├── styles/         # Global CSS & themes
 │   └── types.d.ts      # TypeScript declarations
@@ -50,11 +52,11 @@ inkdown/
 
 ### Available Scripts
 
-- `npm run dev` — Start development server with hot reload
-- `npm run build` — Build the renderer
-- `npm run electron:build` — Build the full Electron app
-- `npm run lint` — Run ESLint
-- `npm run typecheck` — Run TypeScript type checking
+- `pnpm run dev` — Start development server with hot reload
+- `pnpm run build` — Build the renderer
+- `pnpm run electron:build` — Build the full Electron app
+- `pnpm run lint` — Run ESLint
+- `pnpm run typecheck` — Run TypeScript type checking
 
 ## Guidelines
 

@@ -52,14 +52,18 @@ function openFileInWindow(filePath: string): void {
 }
 
 function createWindow(): void {
+  const isMac = process.platform === 'darwin'
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 600,
     minHeight: 400,
+    show: false,
     frame: false,
     titleBarStyle: 'hidden',
-    backgroundColor: '#ffffff',
+    trafficLightPosition: isMac ? { x: 16, y: 8 } : undefined,
+    backgroundColor: '#1e1e2e',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -67,6 +71,10 @@ function createWindow(): void {
       spellcheck: true,
     },
     icon: path.join(__dirname, '../resources/icon.png'),
+  })
+
+  mainWindow.on('ready-to-show', () => {
+    mainWindow?.show()
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -91,7 +99,27 @@ function createWindow(): void {
 }
 
 function buildAppMenu(): void {
-  const template: Electron.MenuItemConstructorOptions[] = [
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = []
+
+  if (isMac) {
+    template.push({
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    })
+  }
+
+  template.push(
     {
       label: 'File',
       submenu: [
@@ -136,7 +164,7 @@ function buildAppMenu(): void {
           ],
         },
         { type: 'separator' },
-        { role: 'quit' },
+        isMac ? { role: 'close' } : { role: 'quit' },
       ],
     },
     {
@@ -158,35 +186,72 @@ function buildAppMenu(): void {
       ],
     },
     {
-      label: 'View',
+      label: 'Paragraph',
       submenu: [
         {
-          label: 'Toggle Sidebar',
-          accelerator: 'CmdOrCtrl+\\',
-          click: () => mainWindow?.webContents.send('menu:toggle-sidebar'),
+          label: 'Heading 1',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => mainWindow?.webContents.send('menu:format', 'h1'),
         },
         {
-          label: 'Toggle Source Mode',
-          accelerator: 'CmdOrCtrl+/',
-          click: () => mainWindow?.webContents.send('menu:toggle-source'),
+          label: 'Heading 2',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => mainWindow?.webContents.send('menu:format', 'h2'),
         },
         {
-          label: 'Focus Mode',
-          accelerator: 'CmdOrCtrl+Shift+F',
-          click: () => mainWindow?.webContents.send('menu:focus-mode'),
+          label: 'Heading 3',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => mainWindow?.webContents.send('menu:format', 'h3'),
+        },
+        {
+          label: 'Heading 4',
+          accelerator: 'CmdOrCtrl+4',
+          click: () => mainWindow?.webContents.send('menu:format', 'h4'),
+        },
+        {
+          label: 'Heading 5',
+          accelerator: 'CmdOrCtrl+5',
+          click: () => mainWindow?.webContents.send('menu:format', 'h5'),
+        },
+        {
+          label: 'Heading 6',
+          accelerator: 'CmdOrCtrl+6',
+          click: () => mainWindow?.webContents.send('menu:format', 'h6'),
         },
         { type: 'separator' },
         {
-          label: 'Toggle Dark Mode',
-          accelerator: 'CmdOrCtrl+Shift+D',
-          click: () => mainWindow?.webContents.send('menu:toggle-theme'),
+          label: 'Table',
+          click: () => mainWindow?.webContents.send('menu:format', 'table'),
+        },
+        {
+          label: 'Code Block',
+          accelerator: 'CmdOrCtrl+Shift+K',
+          click: () => mainWindow?.webContents.send('menu:format', 'codeBlock'),
         },
         { type: 'separator' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { role: 'resetZoom' },
+        {
+          label: 'Quote',
+          accelerator: 'CmdOrCtrl+Shift+Q',
+          click: () => mainWindow?.webContents.send('menu:format', 'blockquote'),
+        },
         { type: 'separator' },
-        { role: 'togglefullscreen' },
+        {
+          label: 'Ordered List',
+          click: () => mainWindow?.webContents.send('menu:format', 'orderedList'),
+        },
+        {
+          label: 'Unordered List',
+          click: () => mainWindow?.webContents.send('menu:format', 'bulletList'),
+        },
+        {
+          label: 'Task List',
+          click: () => mainWindow?.webContents.send('menu:format', 'taskList'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Horizontal Line',
+          click: () => mainWindow?.webContents.send('menu:format', 'horizontalRule'),
+        },
       ],
     },
     {
@@ -214,36 +279,56 @@ function buildAppMenu(): void {
         },
         { type: 'separator' },
         {
-          label: 'Heading 1',
-          accelerator: 'CmdOrCtrl+1',
-          click: () => mainWindow?.webContents.send('menu:format', 'h1'),
-        },
-        {
-          label: 'Heading 2',
-          accelerator: 'CmdOrCtrl+2',
-          click: () => mainWindow?.webContents.send('menu:format', 'h2'),
-        },
-        {
-          label: 'Heading 3',
-          accelerator: 'CmdOrCtrl+3',
-          click: () => mainWindow?.webContents.send('menu:format', 'h3'),
-        },
-        { type: 'separator' },
-        {
           label: 'Code',
           accelerator: 'CmdOrCtrl+E',
           click: () => mainWindow?.webContents.send('menu:format', 'code'),
         },
         {
-          label: 'Code Block',
-          accelerator: 'CmdOrCtrl+Shift+K',
-          click: () => mainWindow?.webContents.send('menu:format', 'codeBlock'),
+          label: 'Highlight',
+          click: () => mainWindow?.webContents.send('menu:format', 'highlight'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Hyperlink',
+          accelerator: 'CmdOrCtrl+K',
+          click: () => mainWindow?.webContents.send('menu:format', 'link'),
         },
         {
-          label: 'Blockquote',
-          accelerator: 'CmdOrCtrl+Shift+Q',
-          click: () => mainWindow?.webContents.send('menu:format', 'blockquote'),
+          label: 'Image',
+          click: () => mainWindow?.webContents.send('menu:format', 'image'),
         },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Toggle Sidebar',
+          accelerator: 'CmdOrCtrl+\\',
+          click: () => mainWindow?.webContents.send('menu:toggle-sidebar'),
+        },
+        {
+          label: 'Source Code Mode',
+          accelerator: 'CmdOrCtrl+/',
+          click: () => mainWindow?.webContents.send('menu:toggle-source'),
+        },
+        {
+          label: 'Focus Mode',
+          accelerator: 'CmdOrCtrl+Shift+F',
+          click: () => mainWindow?.webContents.send('menu:focus-mode'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Toggle Dark Mode',
+          accelerator: 'CmdOrCtrl+Shift+D',
+          click: () => mainWindow?.webContents.send('menu:toggle-theme'),
+        },
+        { type: 'separator' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { role: 'resetZoom' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
       ],
     },
     {
@@ -255,7 +340,7 @@ function buildAppMenu(): void {
             dialog.showMessageBox({
               type: 'info',
               title: 'About InkDown',
-              message: 'InkDown v1.1.0',
+              message: 'InkDown v1.1.1',
               detail:
                 'The open-source WYSIWYG markdown editor.\nBuilt with Electron, React, and Tiptap.\n\nhttps://github.com/BOSSincrypto/inkdown',
             })
@@ -269,7 +354,7 @@ function buildAppMenu(): void {
         { role: 'toggleDevTools' },
       ],
     },
-  ]
+  )
 
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
@@ -409,6 +494,10 @@ ipcMain.handle('folder:read', async (_event, folderPath: string) => {
 
 ipcMain.handle('app:get-recent-files', async () => {
   return recentFiles
+})
+
+ipcMain.handle('app:get-platform', () => {
+  return process.platform
 })
 
 ipcMain.handle('export:pdf', async (_event, htmlContent: string) => {

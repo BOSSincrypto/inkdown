@@ -13,6 +13,7 @@ const electronAPI = {
   readFolder: (folderPath: string) => ipcRenderer.invoke('folder:read', folderPath),
 
   getRecentFiles: () => ipcRenderer.invoke('app:get-recent-files'),
+  getPlatform: () => ipcRenderer.invoke('app:get-platform'),
 
   exportPDF: (htmlContent: string) => ipcRenderer.invoke('export:pdf', htmlContent),
   exportHTML: (htmlContent: string) => ipcRenderer.invoke('export:html', htmlContent),

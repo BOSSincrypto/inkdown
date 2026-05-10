@@ -26,6 +26,7 @@ declare global {
       folderPath: string
     ) => Promise<{ success: boolean; tree?: FileTreeNode[]; error?: string }>
     getRecentFiles: () => Promise<string[]>
+    getPlatform: () => Promise<string>
     exportPDF: (
       htmlContent: string
     ) => Promise<{ success: boolean; filePath?: string; error?: string }>

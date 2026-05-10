@@ -1,25 +1,71 @@
 {
   "name": "inkdown",
-  "version": "1.1.0",
-  "description": "InkDown — The open-source WYSIWYG markdown editor. A beautiful, fast, and resource-efficient alternative to Typora.",
+  "version": "1.1.1",
+  "description": "InkDown — The open-source WYSIWYG markdown editor. A beautiful, fast, and resource-efficient alternative to Typora. Write, edit, and preview markdown in real time with a distraction-free interface.",
   "main": "dist-electron/main.js",
   "author": {
     "name": "InkDown Contributors",
     "email": "rohandevin5@outlook.com"
   },
   "license": "MIT",
+  "homepage": "https://github.com/BOSSincrypto/inkdown",
   "repository": {
     "type": "git",
     "url": "https://github.com/BOSSincrypto/inkdown.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BOSSincrypto/inkdown/issues"
   },
   "keywords": [
     "markdown",
     "editor",
     "wysiwyg",
+    "markdown-editor",
     "typora",
-    "electron",
+    "typora-alternative",
     "open-source",
-    "writing"
+    "electron",
+    "desktop-app",
+    "writing",
+    "note-taking",
+    "notes",
+    "rich-text-editor",
+    "text-editor",
+    "document-editor",
+    "cross-platform",
+    "windows",
+    "macos",
+    "linux",
+    "react",
+    "tiptap",
+    "prosemirror",
+    "vite",
+    "typescript",
+    "live-preview",
+    "syntax-highlighting",
+    "code-blocks",
+    "dark-mode",
+    "light-mode",
+    "focus-mode",
+    "distraction-free",
+    "privacy",
+    "offline",
+    "free",
+    "productivity",
+    "developer-tools",
+    "content-creation",
+    "blogging",
+    "documentation",
+    "knowledge-base",
+    "wiki",
+    "github-flavored-markdown",
+    "gfm",
+    "task-list",
+    "table-editor",
+    "export-pdf",
+    "export-html",
+    "file-explorer",
+    "source-mode"
   ],
   "scripts": {
     "dev": "vite",
@@ -116,7 +162,8 @@
     },
     "mac": {
       "target": ["dmg"],
-      "icon": "resources/icon.icns"
+      "icon": "resources/icon.icns",
+      "category": "public.app-category.productivity"
     },
     "nsis": {
       "oneClick": false,

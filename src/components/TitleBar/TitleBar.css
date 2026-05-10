@@ -13,10 +13,11 @@
 .titlebar-drag {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 12px;
+  gap: 4px;
+  padding-left: 8px;
   flex: 1;
   overflow: hidden;
+  height: 100%;
 }
 
 .titlebar-icon {
@@ -24,6 +25,7 @@
   align-items: center;
   color: var(--accent-color);
   flex-shrink: 0;
+  padding-right: 4px;
 }
 
 .titlebar-title {
@@ -32,6 +34,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-left: 8px;
 }
 
 .titlebar-modified {
@@ -69,4 +72,18 @@
 .titlebar-btn-close:hover {
   background: #e81123;
   color: white;
+}
+
+/* macOS traffic light spacer */
+.titlebar-mac {
+  padding-left: 0;
+}
+
+.titlebar-mac .titlebar-drag {
+  padding-left: 0;
+}
+
+.titlebar-traffic-spacer {
+  width: 78px;
+  flex-shrink: 0;
 }
