@@ -19,6 +19,10 @@ const electronAPI = {
   exportPDF: (htmlContent: string) => ipcRenderer.invoke('export:pdf', htmlContent),
   exportHTML: (htmlContent: string) => ipcRenderer.invoke('export:html', htmlContent),
 
+  editCut: () => ipcRenderer.send('edit:cut'),
+  editCopy: () => ipcRenderer.send('edit:copy'),
+  editPaste: () => ipcRenderer.send('edit:paste'),
+
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
   closeWindow: () => ipcRenderer.send('window:close'),

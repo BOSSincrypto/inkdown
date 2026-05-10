@@ -561,6 +561,10 @@ ipcMain.handle('export:html', async (_event, htmlContent: string) => {
   }
 })
 
+ipcMain.on('edit:cut', () => mainWindow?.webContents.cut())
+ipcMain.on('edit:copy', () => mainWindow?.webContents.copy())
+ipcMain.on('edit:paste', () => mainWindow?.webContents.paste())
+
 ipcMain.on('window:minimize', () => mainWindow?.minimize())
 ipcMain.on('window:maximize', () => {
   if (mainWindow?.isMaximized()) {

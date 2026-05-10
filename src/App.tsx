@@ -278,13 +278,18 @@ function App() {
           editorRef.current?.chain().focus().redo().run()
           break
         case 'cut':
-          document.execCommand('cut')
+          if (api?.editCut) api.editCut()
+          else document.execCommand('cut')
           break
         case 'copy':
-          document.execCommand('copy')
+          if (api?.editCopy) api.editCopy()
+          else document.execCommand('copy')
           break
         case 'paste':
-          document.execCommand('paste')
+          if (api?.editPaste) api.editPaste()
+          else navigator.clipboard.readText().then(text => {
+            editorRef.current?.chain().focus().insertContent(text).run()
+          }).catch(() => {})
           break
         case 'select-all':
           editorRef.current?.chain().focus().selectAll().run()

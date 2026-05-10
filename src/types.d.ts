@@ -34,6 +34,9 @@ declare global {
     exportHTML: (
       htmlContent: string
     ) => Promise<{ success: boolean; filePath?: string; error?: string }>
+    editCut: () => void
+    editCopy: () => void
+    editPaste: () => void
     minimizeWindow: () => void
     maximizeWindow: () => void
     closeWindow: () => void
