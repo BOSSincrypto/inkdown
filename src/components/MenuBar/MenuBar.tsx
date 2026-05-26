@@ -116,6 +116,8 @@ const MENUS: MenuGroup[] = [
   {
     label: 'Help',
     items: [
+      { label: 'Check for Updates...', action: 'check-updates' },
+      { type: 'separator' },
       { label: 'About InkDown', action: 'about' },
       { label: 'GitHub Repository', action: 'github' },
       { type: 'separator' },

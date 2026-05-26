@@ -5,6 +5,7 @@ import Editor from './components/Editor/Editor'
 import Toolbar from './components/Toolbar/Toolbar'
 import StatusBar from './components/StatusBar/StatusBar'
 import ContextMenu from './components/ContextMenu/ContextMenu'
+import FindReplace from './components/FindReplace/FindReplace'
 import type { Editor as TiptapEditor } from '@tiptap/core'
 
 type Theme = 'light' | 'dark'
@@ -31,6 +32,7 @@ function App() {
 
   const editorRef = useRef<TiptapEditor | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [showFind, setShowFind] = useState(false)
 
   useEffect(() => {
     api?.getPlatform().then((p) => {
@@ -267,6 +269,7 @@ function App() {
           toggleTheme()
           break
         case 'find':
+          setShowFind(true)
           break
         case 'clear-format':
           editorRef.current?.chain().focus().clearNodes().unsetAllMarks().run()
@@ -295,7 +298,12 @@ function App() {
           editorRef.current?.chain().focus().selectAll().run()
           break
         case 'about':
-          alert('InkDown v1.1.1\nThe open-source WYSIWYG markdown editor.\n\nhttps://github.com/BOSSincrypto/inkdown')
+          api?.getVersion().then(v => {
+            alert(`InkDown v${v}\nThe open-source WYSIWYG markdown editor.\n\nhttps://github.com/BOSSincrypto/inkdown`)
+          })
+          break
+        case 'check-updates':
+          api?.checkForUpdates()
           break
         case 'github':
           api?.openExternal('https://github.com/BOSSincrypto/inkdown')
@@ -336,6 +344,7 @@ function App() {
       api.onMenuFocusMode(toggleFocusMode),
       api.onMenuToggleTheme(toggleTheme),
       api.onMenuFormat(handleFormat),
+      api.onMenuFind(() => setShowFind(true)),
       api.onFileOpened((_event, data) => {
         setCurrentFile(data.filePath)
         setContent(data.content)
@@ -395,14 +404,22 @@ function App() {
           />
         )}
 
-        <Editor
-          content={content}
-          markdownContent={markdownContent}
-          sourceMode={sourceMode}
-          onContentChange={handleContentChange}
-          onEditorReady={handleEditorReady}
-          onSourceChange={handleSourceChange}
-        />
+        <div className="editor-area">
+          {showFind && (
+            <FindReplace
+              editor={editorRef.current}
+              onClose={() => setShowFind(false)}
+            />
+          )}
+          <Editor
+            content={content}
+            markdownContent={markdownContent}
+            sourceMode={sourceMode}
+            onContentChange={handleContentChange}
+            onEditorReady={handleEditorReady}
+            onSourceChange={handleSourceChange}
+          />
+        </div>
       </div>
 
       {contextMenu && (

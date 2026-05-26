@@ -166,6 +166,14 @@ body {
   overflow: hidden;
 }
 
+.editor-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* Focus Mode */
 .app.focus-mode .editor-scroll {
   padding: 60px 20px;

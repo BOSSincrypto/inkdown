@@ -27,6 +27,8 @@ declare global {
     ) => Promise<{ success: boolean; tree?: FileTreeNode[]; error?: string }>
     getRecentFiles: () => Promise<string[]>
     getPlatform: () => Promise<string>
+    getVersion: () => Promise<string>
+    checkForUpdates: () => Promise<void>
     openExternal: (url: string) => Promise<void>
     exportPDF: (
       htmlContent: string

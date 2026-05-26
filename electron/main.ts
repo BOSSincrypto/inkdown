@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell, nativeImage, net } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
@@ -6,6 +6,74 @@ let mainWindow: BrowserWindow | null = null
 const recentFiles: string[] = []
 const MAX_RECENT = 10
 let pendingFilePath: string | null = null
+
+const GITHUB_REPO = 'BOSSincrypto/inkdown'
+const CURRENT_VERSION = app.getVersion()
+
+function checkForUpdates(silent = false): void {
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+  const request = net.request(url)
+  request.setHeader('Accept', 'application/vnd.github.v3+json')
+  request.setHeader('User-Agent', `InkDown/${CURRENT_VERSION}`)
+
+  let body = ''
+  request.on('response', (response) => {
+    response.on('data', (chunk) => { body += chunk.toString() })
+    response.on('end', () => {
+      try {
+        const data = JSON.parse(body)
+        const latest = (data.tag_name || '').replace(/^v/, '')
+        if (!latest) return
+        if (isNewerVersion(latest, CURRENT_VERSION)) {
+          const releaseUrl = data.html_url || `https://github.com/${GITHUB_REPO}/releases/latest`
+          dialog
+            .showMessageBox({
+              type: 'info',
+              title: 'Update Available',
+              message: `InkDown v${latest} is available`,
+              detail: `You are using v${CURRENT_VERSION}. Would you like to download the update?`,
+              buttons: ['Download', 'Later'],
+              defaultId: 0,
+              cancelId: 1,
+            })
+            .then(({ response: btn }) => {
+              if (btn === 0) shell.openExternal(releaseUrl)
+            })
+        } else if (!silent) {
+          dialog.showMessageBox({
+            type: 'info',
+            title: 'No Updates',
+            message: 'You are using the latest version',
+            detail: `InkDown v${CURRENT_VERSION}`,
+          })
+        }
+      } catch { /* ignore parse errors */ }
+    })
+  })
+  request.on('error', () => {
+    if (!silent) {
+      dialog.showMessageBox({
+        type: 'warning',
+        title: 'Update Check Failed',
+        message: 'Could not check for updates',
+        detail: 'Please check your internet connection.',
+      })
+    }
+  })
+  request.end()
+}
+
+function isNewerVersion(latest: string, current: string): boolean {
+  const lParts = latest.split('.').map(Number)
+  const cParts = current.split('.').map(Number)
+  for (let i = 0; i < Math.max(lParts.length, cParts.length); i++) {
+    const l = lParts[i] || 0
+    const c = cParts[i] || 0
+    if (l > c) return true
+    if (l < c) return false
+  }
+  return false
+}
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -51,8 +119,15 @@ function openFileInWindow(filePath: string): void {
   } catch { /* ignore read errors */ }
 }
 
+function getAppIcon(): Electron.NativeImage {
+  const ext = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  const iconPath = path.join(__dirname, '../resources', ext)
+  return nativeImage.createFromPath(iconPath)
+}
+
 function createWindow(): void {
   const isMac = process.platform === 'darwin'
+  const appIcon = getAppIcon()
 
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -70,11 +145,16 @@ function createWindow(): void {
       nodeIntegration: false,
       spellcheck: true,
     },
-    icon: path.join(__dirname, '../resources/icon.png'),
+    icon: appIcon,
   })
+
+  if (isMac && app.dock) {
+    app.dock.setIcon(appIcon)
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
+    setTimeout(() => checkForUpdates(true), 5000)
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -335,12 +415,17 @@ function buildAppMenu(): void {
       label: 'Help',
       submenu: [
         {
+          label: 'Check for Updates...',
+          click: () => checkForUpdates(false),
+        },
+        { type: 'separator' },
+        {
           label: 'About InkDown',
           click: () => {
             dialog.showMessageBox({
               type: 'info',
               title: 'About InkDown',
-              message: 'InkDown v1.1.1',
+              message: `InkDown v${CURRENT_VERSION}`,
               detail:
                 'The open-source WYSIWYG markdown editor.\nBuilt with Electron, React, and Tiptap.\n\nhttps://github.com/BOSSincrypto/inkdown',
             })
@@ -498,6 +583,14 @@ ipcMain.handle('app:get-recent-files', async () => {
 
 ipcMain.handle('app:get-platform', () => {
   return process.platform
+})
+
+ipcMain.handle('app:get-version', () => {
+  return CURRENT_VERSION
+})
+
+ipcMain.handle('app:check-updates', () => {
+  checkForUpdates(false)
 })
 
 ipcMain.handle('app:open-external', async (_event, url: string) => {
