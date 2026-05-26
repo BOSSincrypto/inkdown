@@ -1,6 +1,6 @@
 {
   "name": "inkdown",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "InkDown — The open-source WYSIWYG markdown editor. A beautiful, fast, and resource-efficient alternative to Typora. Write, edit, and preview markdown in real time with a distraction-free interface.",
   "main": "dist-electron/main.js",
   "author": {
@@ -65,7 +65,7 @@
     "export-pdf",
     "export-html",
     "file-explorer",
-    "source-mode"
+    "source-mode",
     "ai",
     "llm",
     "prompt-engineering",
@@ -134,7 +134,8 @@
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "resources/**/*"
     ],
     "fileAssociations": [
       {
@@ -155,14 +156,9 @@
         {
           "target": "nsis",
           "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
         }
       ],
-      "icon": "resources/icon.ico",
-      "artifactName": "${productName}-${version}-${os}-${arch}-${target}.${ext}"
+      "icon": "resources/icon.ico"
     },
     "linux": {
       "target": ["AppImage", "deb"],
@@ -172,16 +168,13 @@
     },
     "mac": {
       "target": ["dmg"],
-      "icon": "resources/icon.icns",
+      "icon": "resources/icon.png",
       "category": "public.app-category.productivity"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "${productName}-${version}-Setup.${ext}"
-    },
-    "portable": {
-      "artifactName": "${productName}-${version}-Portable.${ext}"
     }
   }
 }

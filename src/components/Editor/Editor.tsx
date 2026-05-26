@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
@@ -17,6 +17,7 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
 import type { Editor as TiptapEditor } from '@tiptap/core'
+import CodeBlock from '../CodeBlock/CodeBlock'
 import './Editor.css'
 
 const lowlight = createLowlight(common)
@@ -66,7 +67,11 @@ function Editor({
         placeholder: 'Start writing with markdown...',
       }),
       Typography,
-      CodeBlockLowlight.configure({ lowlight }),
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlock)
+        },
+      }).configure({ lowlight }),
       Markdown.configure({
         html: true,
         tightLists: true,

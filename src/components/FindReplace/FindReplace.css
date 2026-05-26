@@ -1,0 +1,106 @@
+.find-replace-bar {
+  position: absolute;
+  top: 0;
+  right: 20px;
+  z-index: 100;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 360px;
+}
+
+.find-row,
+.replace-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.find-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--editor-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+}
+
+.find-input:focus {
+  border-color: var(--accent-color);
+}
+
+.find-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 52px;
+  text-align: center;
+}
+
+.find-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  white-space: nowrap;
+}
+
+.find-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.find-btn.active {
+  background: var(--active-bg);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.find-case-btn {
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 28px;
+}
+
+.replace-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+}
+
+.replace-btn:hover {
+  border-color: var(--accent-color);
+}
+
+.find-close-btn:hover {
+  color: #e74c3c;
+}
+
+/* Highlight decorations */
+.find-highlight {
+  background: rgba(255, 213, 79, 0.4);
+  border-radius: 2px;
+}
+
+.find-highlight-current {
+  background: rgba(255, 152, 0, 0.6);
+  border-radius: 2px;
+  outline: 2px solid var(--accent-color);
+}
