@@ -204,8 +204,8 @@ function buildAppMenu(): void {
       label: 'File',
       submenu: [
         {
-          label: 'New File',
-          accelerator: 'CmdOrCtrl+N',
+          label: 'New Tab',
+          accelerator: 'CmdOrCtrl+T',
           click: () => mainWindow?.webContents.send('menu:new-file'),
         },
         {

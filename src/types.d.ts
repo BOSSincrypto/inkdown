@@ -12,6 +12,14 @@ declare global {
     isModified: boolean
   }
 
+  interface Tab {
+    id: string
+    filePath: string | null
+    markdown: string
+    isModified: boolean
+    scrollTop: number
+  }
+
   interface ElectronAPI {
     openFile: () => Promise<void>
     openFolder: () => Promise<void>

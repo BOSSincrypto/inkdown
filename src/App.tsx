@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import TitleBar from './components/TitleBar/TitleBar'
+import TabBar from './components/TabBar/TabBar'
 import Sidebar from './components/Sidebar/Sidebar'
 import Editor from './components/Editor/Editor'
 import Toolbar from './components/Toolbar/Toolbar'
@@ -12,6 +13,15 @@ type Theme = 'light' | 'dark'
 
 const api = window.electronAPI
 
+let tabIdCounter = 1
+function nextTabId(): string {
+  return `tab-${tabIdCounter++}`
+}
+
+function makeTab(filePath: string | null = null, markdown = ''): Tab {
+  return { id: nextTabId(), filePath, markdown, isModified: false, scrollTop: 0 }
+}
+
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('inkdown-theme') as Theme) || 'light'
@@ -21,10 +31,10 @@ function App() {
   const [sourceMode, setSourceMode] = useState(false)
   const [platform, setPlatform] = useState('win32')
 
-  const [currentFile, setCurrentFile] = useState<string | null>(null)
+  const [tabs, setTabs] = useState<Tab[]>(() => [makeTab()])
+  const [activeTabId, setActiveTabId] = useState(() => tabs[0].id)
   const [content, setContent] = useState('')
   const [markdownContent, setMarkdownContent] = useState('')
-  const [isModified, setIsModified] = useState(false)
   const [folderPath, setFolderPath] = useState<string | null>(null)
   const [folderTree, setFolderTree] = useState<FileTreeNode[]>([])
   const [wordCount, setWordCount] = useState(0)
@@ -33,6 +43,27 @@ function App() {
   const editorRef = useRef<TiptapEditor | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showFind, setShowFind] = useState(false)
+
+  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
+
+  const snapshotActiveTab = useCallback(() => {
+    if (!editorRef.current) return
+    const md = editorRef.current.storage.markdown.getMarkdown()
+    const scrollEl = document.querySelector('.editor-scroll')
+    const scrollTop = scrollEl ? scrollEl.scrollTop : 0
+    setTabs((prev) =>
+      prev.map((t) => (t.id === activeTabId ? { ...t, markdown: md, scrollTop } : t))
+    )
+  }, [activeTabId])
+
+  const updateActiveTab = useCallback(
+    (patch: Partial<Tab>) => {
+      setTabs((prev) =>
+        prev.map((t) => (t.id === activeTabId ? { ...t, ...patch } : t))
+      )
+    },
+    [activeTabId]
+  )
 
   useEffect(() => {
     api?.getPlatform().then((p) => {
@@ -64,47 +95,92 @@ function App() {
     setSourceMode((prev) => !prev)
   }, [])
 
+  const switchTab = useCallback(
+    (newTabId: string) => {
+      if (newTabId === activeTabId) return
+      snapshotActiveTab()
+      setActiveTabId(newTabId)
+      setSourceMode(false)
+      const tab = tabs.find((t) => t.id === newTabId)
+      if (tab) {
+        setContent(tab.markdown)
+        setMarkdownContent(tab.markdown)
+        requestAnimationFrame(() => {
+          const scrollEl = document.querySelector('.editor-scroll')
+          if (scrollEl) scrollEl.scrollTop = tab.scrollTop
+        })
+      }
+    },
+    [activeTabId, tabs, snapshotActiveTab]
+  )
+
   const handleNewFile = useCallback(() => {
-    setCurrentFile(null)
+    snapshotActiveTab()
+    const tab = makeTab()
+    setTabs((prev) => [...prev, tab])
+    setActiveTabId(tab.id)
     setContent('')
     setMarkdownContent('')
-    setIsModified(false)
-  }, [])
+    setSourceMode(false)
+  }, [snapshotActiveTab])
+
+  const closeTab = useCallback(
+    (tabId: string) => {
+      setTabs((prev) => {
+        if (prev.length <= 1) {
+          const fresh = makeTab()
+          setActiveTabId(fresh.id)
+          setContent('')
+          setMarkdownContent('')
+          return [fresh]
+        }
+        const idx = prev.findIndex((t) => t.id === tabId)
+        const next = prev.filter((t) => t.id !== tabId)
+        if (tabId === activeTabId) {
+          const newIdx = Math.min(idx, next.length - 1)
+          const newActive = next[newIdx]
+          setActiveTabId(newActive.id)
+          setContent(newActive.markdown)
+          setMarkdownContent(newActive.markdown)
+        }
+        return next
+      })
+    },
+    [activeTabId]
+  )
 
   const handleSave = useCallback(async () => {
     if (!editorRef.current) return
 
     const md = editorRef.current.storage.markdown.getMarkdown()
 
-    if (currentFile) {
-      const result = await api.writeFile(currentFile, md)
-      if (result.success) setIsModified(false)
+    if (activeTab.filePath) {
+      const result = await api.writeFile(activeTab.filePath, md)
+      if (result.success) updateActiveTab({ isModified: false, markdown: md })
     } else {
       const filePath = await api.saveFileDialog({ defaultPath: 'untitled.md' })
       if (filePath) {
         const result = await api.writeFile(filePath, md)
         if (result.success) {
-          setCurrentFile(filePath)
-          setIsModified(false)
+          updateActiveTab({ filePath, isModified: false, markdown: md })
         }
       }
     }
-  }, [currentFile])
+  }, [activeTab.filePath, updateActiveTab])
 
   const handleSaveAs = useCallback(async () => {
     if (!editorRef.current) return
     const md = editorRef.current.storage.markdown.getMarkdown()
     const filePath = await api.saveFileDialog({
-      defaultPath: currentFile || 'untitled.md',
+      defaultPath: activeTab.filePath || 'untitled.md',
     })
     if (filePath) {
       const result = await api.writeFile(filePath, md)
       if (result.success) {
-        setCurrentFile(filePath)
-        setIsModified(false)
+        updateActiveTab({ filePath, isModified: false, markdown: md })
       }
     }
-  }, [currentFile])
+  }, [activeTab.filePath, updateActiveTab])
 
   const handleExport = useCallback(
     async (_event: unknown, format: string) => {
@@ -119,25 +195,36 @@ function App() {
     []
   )
 
-  const handleFileSelect = useCallback(async (filePath: string) => {
-    const result = await api.readFile(filePath)
-    if (result.success && result.content !== undefined) {
-      setCurrentFile(filePath)
-      setContent(result.content)
-      setMarkdownContent(result.content)
-      setIsModified(false)
-    }
-  }, [])
+  const handleFileSelect = useCallback(
+    async (filePath: string) => {
+      const existing = tabs.find((t) => t.filePath === filePath)
+      if (existing) {
+        switchTab(existing.id)
+        return
+      }
+      const result = await api.readFile(filePath)
+      if (result.success && result.content !== undefined) {
+        snapshotActiveTab()
+        const tab = makeTab(filePath, result.content)
+        setTabs((prev) => [...prev, tab])
+        setActiveTabId(tab.id)
+        setContent(result.content)
+        setMarkdownContent(result.content)
+        setSourceMode(false)
+      }
+    },
+    [tabs, switchTab, snapshotActiveTab]
+  )
 
   const handleContentChange = useCallback(
     (editor: TiptapEditor) => {
-      setIsModified(true)
+      updateActiveTab({ isModified: true })
       const text = editor.state.doc.textContent
       const words = text.trim() ? text.trim().split(/\s+/).length : 0
       setWordCount(words)
       setCharCount(text.length)
     },
-    []
+    [updateActiveTab]
   )
 
   const handleEditorReady = useCallback((editor: TiptapEditor) => {
@@ -256,6 +343,9 @@ function App() {
         case 'close-window':
           api?.closeWindow()
           break
+        case 'close-tab':
+          closeTab(activeTabId)
+          break
         case 'toggle-sidebar':
           toggleSidebar()
           break
@@ -310,14 +400,14 @@ function App() {
           break
       }
     },
-    [handleNewFile, handleSave, handleSaveAs, handleExport, handleFormat, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme]
+    [handleNewFile, handleSave, handleSaveAs, handleExport, handleFormat, closeTab, activeTabId, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme]
   )
 
   const handleSourceChange = useCallback((newMarkdown: string) => {
     setMarkdownContent(newMarkdown)
     setContent(newMarkdown)
-    setIsModified(true)
-  }, [])
+    updateActiveTab({ isModified: true })
+  }, [updateActiveTab])
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -330,6 +420,32 @@ function App() {
     },
     [handleFormat]
   )
+
+  // Keyboard shortcuts for tabs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const ctrlOrMeta = e.ctrlKey || e.metaKey
+      if (ctrlOrMeta && e.key === 't') {
+        e.preventDefault()
+        handleNewFile()
+      } else if (ctrlOrMeta && e.key === 'w') {
+        e.preventDefault()
+        closeTab(activeTabId)
+      } else if (ctrlOrMeta && e.key === 'Tab') {
+        e.preventDefault()
+        const idx = tabs.findIndex((t) => t.id === activeTabId)
+        if (e.shiftKey) {
+          const prev = (idx - 1 + tabs.length) % tabs.length
+          switchTab(tabs[prev].id)
+        } else {
+          const next = (idx + 1) % tabs.length
+          switchTab(tabs[next].id)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleNewFile, closeTab, activeTabId, tabs, switchTab])
 
   // Register Electron menu listeners
   useEffect(() => {
@@ -346,10 +462,18 @@ function App() {
       api.onMenuFormat(handleFormat),
       api.onMenuFind(() => setShowFind(true)),
       api.onFileOpened((_event, data) => {
-        setCurrentFile(data.filePath)
+        const existing = tabs.find((t) => t.filePath === data.filePath)
+        if (existing) {
+          switchTab(existing.id)
+          return
+        }
+        snapshotActiveTab()
+        const tab = makeTab(data.filePath, data.content)
+        setTabs((prev) => [...prev, tab])
+        setActiveTabId(tab.id)
         setContent(data.content)
         setMarkdownContent(data.content)
-        setIsModified(false)
+        setSourceMode(false)
       }),
       api.onFolderOpened((_event, data) => {
         setFolderPath(data.folderPath)
@@ -368,20 +492,31 @@ function App() {
     toggleFocusMode,
     toggleTheme,
     handleFormat,
+    tabs,
+    switchTab,
+    snapshotActiveTab,
   ])
 
-  const fileName = currentFile
-    ? currentFile.split(/[/\\]/).pop() || 'Untitled'
+  const fileName = activeTab.filePath
+    ? activeTab.filePath.split(/[/\\]/).pop() || 'Untitled'
     : 'Untitled'
 
   return (
     <div className={`app ${focusMode ? 'focus-mode' : ''}`}>
       <TitleBar
         fileName={fileName}
-        isModified={isModified}
+        isModified={activeTab.isModified}
         theme={theme}
         platform={platform}
         onMenuAction={handleMenuAction}
+      />
+
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelectTab={switchTab}
+        onCloseTab={closeTab}
+        onNewTab={handleNewFile}
       />
 
       {!focusMode && (
@@ -398,7 +533,7 @@ function App() {
           <Sidebar
             folderPath={folderPath}
             folderTree={folderTree}
-            currentFile={currentFile}
+            currentFile={activeTab.filePath}
             onFileSelect={handleFileSelect}
             onOpenFolder={() => api?.openFolder()}
           />
@@ -437,13 +572,13 @@ function App() {
         <StatusBar
           wordCount={wordCount}
           charCount={charCount}
-          isModified={isModified}
+          isModified={activeTab.isModified}
           sourceMode={sourceMode}
           theme={theme}
           onToggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
-          currentFile={currentFile}
+          currentFile={activeTab.filePath}
         />
       )}
     </div>
