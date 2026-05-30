@@ -70,6 +70,10 @@ const electronAPI = {
     ipcRenderer.on('menu:find', callback)
     return () => ipcRenderer.removeListener('menu:find', callback)
   },
+  onMenuCloseTab: (callback: () => void) => {
+    ipcRenderer.on('menu:close-tab', callback)
+    return () => ipcRenderer.removeListener('menu:close-tab', callback)
+  },
   onFileOpened: (
     callback: (_event: unknown, data: { filePath: string; content: string }) => void
   ) => {

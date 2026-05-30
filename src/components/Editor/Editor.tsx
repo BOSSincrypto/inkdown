@@ -91,25 +91,6 @@ function Editor({
         class: 'inkdown-editor-content',
         spellcheck: 'true',
       },
-      handleDOMEvents: {
-        copy(view, event) {
-          const { from, to } = view.state.selection
-          if (from === to) return false
-          const text = view.state.doc.textBetween(from, to, '\n')
-          event.clipboardData?.setData('text/plain', text)
-          event.preventDefault()
-          return true
-        },
-        cut(view, event) {
-          const { from, to } = view.state.selection
-          if (from === to) return false
-          const text = view.state.doc.textBetween(from, to, '\n')
-          event.clipboardData?.setData('text/plain', text)
-          event.preventDefault()
-          view.dispatch(view.state.tr.deleteSelection())
-          return true
-        },
-      },
     },
   })
 

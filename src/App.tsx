@@ -428,9 +428,6 @@ function App() {
       if (ctrlOrMeta && e.key === 't') {
         e.preventDefault()
         handleNewFile()
-      } else if (ctrlOrMeta && e.key === 'w') {
-        e.preventDefault()
-        closeTab(activeTabId)
       } else if (ctrlOrMeta && e.key === 'Tab') {
         e.preventDefault()
         const idx = tabs.findIndex((t) => t.id === activeTabId)
@@ -461,6 +458,7 @@ function App() {
       api.onMenuToggleTheme(toggleTheme),
       api.onMenuFormat(handleFormat),
       api.onMenuFind(() => setShowFind(true)),
+      api.onMenuCloseTab(() => closeTab(activeTabId)),
       api.onFileOpened((_event, data) => {
         const existing = tabs.find((t) => t.filePath === data.filePath)
         if (existing) {
@@ -492,6 +490,8 @@ function App() {
     toggleFocusMode,
     toggleTheme,
     handleFormat,
+    closeTab,
+    activeTabId,
     tabs,
     switchTab,
     snapshotActiveTab,

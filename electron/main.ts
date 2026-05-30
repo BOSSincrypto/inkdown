@@ -244,7 +244,12 @@ function buildAppMenu(): void {
           ],
         },
         { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' },
+        {
+          label: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          click: () => mainWindow?.webContents.send('menu:close-tab'),
+        },
+        ...(isMac ? [] : [{ role: 'quit' as const }]),
       ],
     },
     {
