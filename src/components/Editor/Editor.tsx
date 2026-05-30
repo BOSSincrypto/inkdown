@@ -77,7 +77,7 @@ function Editor({
         tightLists: true,
         bulletListMarker: '-',
         transformPastedText: true,
-        transformCopiedText: true,
+        transformCopiedText: false,
       }),
     ],
     content: '',

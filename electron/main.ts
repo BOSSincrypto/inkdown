@@ -204,8 +204,8 @@ function buildAppMenu(): void {
       label: 'File',
       submenu: [
         {
-          label: 'New File',
-          accelerator: 'CmdOrCtrl+N',
+          label: 'New Tab',
+          accelerator: 'CmdOrCtrl+T',
           click: () => mainWindow?.webContents.send('menu:new-file'),
         },
         {
@@ -244,7 +244,12 @@ function buildAppMenu(): void {
           ],
         },
         { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' },
+        {
+          label: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          click: () => mainWindow?.webContents.send('menu:close-tab'),
+        },
+        ...(isMac ? [] : [{ role: 'quit' as const }]),
       ],
     },
     {

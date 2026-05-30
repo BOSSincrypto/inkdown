@@ -22,7 +22,8 @@ const MENUS: MenuGroup[] = [
   {
     label: 'File',
     items: [
-      { label: 'New', shortcut: 'Ctrl+N', action: 'new-file' },
+      { label: 'New Tab', shortcut: 'Ctrl+T', action: 'new-file' },
+      { label: 'Close Tab', shortcut: 'Ctrl+W', action: 'close-tab' },
       { type: 'separator' },
       { label: 'Open File...', shortcut: 'Ctrl+O', action: 'open-file' },
       { label: 'Open Folder...', shortcut: 'Ctrl+Shift+O', action: 'open-folder' },
@@ -40,7 +41,7 @@ const MENUS: MenuGroup[] = [
       { type: 'separator' },
       { label: 'Preferences', shortcut: 'Ctrl+,', action: 'preferences' },
       { type: 'separator' },
-      { label: 'Close', shortcut: 'Ctrl+W', action: 'close-window' },
+      { label: 'Close Window', action: 'close-window' },
     ],
   },
   {

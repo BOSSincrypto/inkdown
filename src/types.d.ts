@@ -12,6 +12,14 @@ declare global {
     isModified: boolean
   }
 
+  interface Tab {
+    id: string
+    filePath: string | null
+    markdown: string
+    isModified: boolean
+    scrollTop: number
+  }
+
   interface ElectronAPI {
     openFile: () => Promise<void>
     openFolder: () => Promise<void>
@@ -53,6 +61,7 @@ declare global {
     onMenuToggleTheme: (callback: () => void) => () => void
     onMenuFormat: (callback: (_event: unknown, format: string) => void) => () => void
     onMenuFind: (callback: () => void) => () => void
+    onMenuCloseTab: (callback: () => void) => () => void
     onFileOpened: (
       callback: (_event: unknown, data: { filePath: string; content: string }) => void
     ) => () => void
