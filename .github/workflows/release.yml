@@ -2,14 +2,37 @@ name: Build & Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - init-main
 
 permissions:
   contents: write
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pkg.outputs.version }}
+      tag: ${{ steps.pkg.outputs.tag }}
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+      - id: check
+        run: |
+          if git ls-remote --tags origin "refs/tags/${{ steps.pkg.outputs.tag }}" | grep -q .; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build-linux:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +54,8 @@ jobs:
             release/*.deb
 
   build-windows:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +76,8 @@ jobs:
             release/*.exe
 
   build-mac:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,9 +98,17 @@ jobs:
             release/*.dmg
 
   release:
-    needs: [build-linux, build-windows, build-mac]
+    needs: [check-version, build-linux, build-windows, build-mac]
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Create tag
+        run: |
+          git tag ${{ needs.check-version.outputs.tag }}
+          git push origin ${{ needs.check-version.outputs.tag }}
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -84,7 +119,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: InkDown v${{ github.ref_name }}
+          tag_name: ${{ needs.check-version.outputs.tag }}
+          name: InkDown ${{ needs.check-version.outputs.tag }}
           draft: false
           prerelease: false
           generate_release_notes: true
