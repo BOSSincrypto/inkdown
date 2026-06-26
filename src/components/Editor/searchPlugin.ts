@@ -9,7 +9,7 @@ export const SEARCH_PLUGIN_KEY = new PluginKey<DecorationSet>('searchHighlight')
 // не ломая внутреннее состояние редактора
 export const SearchHighlight = Extension.create({
   name: 'searchHighlight',
-  addPlugins() {
+  addProseMirrorPlugins() {
     return [
       new Plugin({
         key: SEARCH_PLUGIN_KEY,

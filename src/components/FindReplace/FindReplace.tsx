@@ -26,8 +26,7 @@ interface TabSearchState {
   showReplace: boolean
 }
 
-// Состояние поиска хранится на уровне модуля — переживает перемонтирование компонента
-// и сохраняется при переключении вкладок
+// Состояние поиска для каждой вкладки — переживает перемонтирование
 const perTabState = new Map<string, TabSearchState>()
 
 function findAllMatches(editor: TiptapEditor, query: string, caseSensitive: boolean): SearchResult[] {
@@ -50,7 +49,6 @@ function findAllMatches(editor: TiptapEditor, query: string, caseSensitive: bool
 }
 
 function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
-  // Инициализируем из сохранённого состояния для текущей вкладки
   const saved = perTabState.get(tabId)
   const [findText, setFindText] = useState(saved?.findText ?? '')
   const [replaceText, setReplaceText] = useState(saved?.replaceText ?? '')
@@ -65,7 +63,6 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
     findInputRef.current?.focus()
   }, [])
 
-  // Сохраняем состояние при каждом изменении полей
   useEffect(() => {
     perTabState.set(tabId, { findText, replaceText, caseSensitive, showReplace })
   }, [tabId, findText, replaceText, caseSensitive, showReplace])
@@ -83,21 +80,27 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
     editor.view.dispatch(buildClearTx(editor.view.state))
   }, [editor])
 
+  // Скролл к совпадению: setTextSelection + scrollIntoView на транзакции + fallback через DOM
   const scrollToMatch = useCallback(
     (match: SearchResult) => {
       if (!editor) return
-      editor.commands.setTextSelection(match)
-      requestAnimationFrame(() => {
+      const { from, to } = match
+
+      // Устанавливаем выделение и скроллим через ProseMirror (без .focus() — фокус остаётся в поле поиска)
+      editor.chain().setTextSelection({ from, to }).scrollIntoView().run()
+
+      // Дополнительный скролл через DOM — центрируем совпадение в верхней трети
+      setTimeout(() => {
         try {
-          const coords = editor.view.coordsAtPos(match.from)
+          const coords = editor.view.coordsAtPos(from)
           const scrollEl = document.querySelector('.editor-scroll')
           if (scrollEl && coords) {
             const rect = scrollEl.getBoundingClientRect()
-            const scrollTop = scrollEl.scrollTop + coords.top - rect.top - rect.height / 3
-            scrollEl.scrollTo({ top: scrollTop, behavior: 'smooth' })
+            const target = scrollEl.scrollTop + coords.top - rect.top - rect.height / 3
+            scrollEl.scrollTo({ top: target, behavior: 'smooth' })
           }
         } catch { /* позиция может быть недоступна */ }
-      })
+      }, 30)
     },
     [editor]
   )
@@ -122,8 +125,7 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
     [editor, clearHighlights, updateHighlights, scrollToMatch]
   )
 
-  // При переключении вкладки: сохраняем старое состояние, восстанавливаем новое,
-  // перезапускаем поиск (с задержкой — контент обновляется в Editor useEffect)
+  // При переключении вкладки: очищаем старую подсветку, восстанавливаем состояние, перезапускаем поиск
   useEffect(() => {
     if (prevTabIdRef.current === tabId) return
     prevTabIdRef.current = tabId
@@ -138,7 +140,8 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
       setShowReplace(restore.showReplace)
 
       if (restore.findText && editor) {
-        requestAnimationFrame(() => {
+        // Ждём пока Editor обновит контент (useEffect в Editor запускается позже)
+        setTimeout(() => {
           const matches = findAllMatches(editor, restore.findText, restore.caseSensitive)
           setResults(matches)
           const idx = matches.length > 0 ? 0 : -1
@@ -147,7 +150,7 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
             updateHighlights(matches, idx)
             scrollToMatch(matches[idx])
           }
-        })
+        }, 50)
       } else {
         setResults([])
         setCurrentIndex(-1)
@@ -162,7 +165,7 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
     }
   }, [tabId, editor]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Очистка подсветки при закрытии панели
+  // Очистка при закрытии панели
   useEffect(() => {
     return () => {
       if (editor) {
@@ -173,9 +176,7 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      }
+      if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -199,12 +200,9 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
   const goToMatch = useCallback(
     (direction: 'next' | 'prev') => {
       if (results.length === 0) return
-      let newIdx: number
-      if (direction === 'next') {
-        newIdx = (currentIndex + 1) % results.length
-      } else {
-        newIdx = (currentIndex - 1 + results.length) % results.length
-      }
+      const newIdx = direction === 'next'
+        ? (currentIndex + 1) % results.length
+        : (currentIndex - 1 + results.length) % results.length
       setCurrentIndex(newIdx)
       updateHighlights(results, newIdx)
       scrollToMatch(results[newIdx])
@@ -233,11 +231,7 @@ function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault()
-        if (e.shiftKey) {
-          goToMatch('prev')
-        } else {
-          goToMatch('next')
-        }
+        e.shiftKey ? goToMatch('prev') : goToMatch('next')
       }
     },
     [goToMatch]
