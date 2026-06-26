@@ -3,9 +3,34 @@ import path from 'path'
 import fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
-const recentFiles: string[] = []
-const MAX_RECENT = 10
+const MAX_RECENT = 15
 let pendingFilePath: string | null = null
+
+const RECENT_FILE = path.join(app.getPath('userData'), 'recent.json')
+
+interface RecentData {
+  files: string[]
+  folders: string[]
+}
+
+function loadRecent(): RecentData {
+  try {
+    if (fs.existsSync(RECENT_FILE)) {
+      return JSON.parse(fs.readFileSync(RECENT_FILE, 'utf-8'))
+    }
+  } catch { /* ignore */ }
+  return { files: [], folders: [] }
+}
+
+function saveRecent(data: RecentData): void {
+  try {
+    const dir = path.dirname(RECENT_FILE)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(RECENT_FILE, JSON.stringify(data, null, 2), 'utf-8')
+  } catch { /* ignore */ }
+}
+
+const recentData = loadRecent()
 
 const GITHUB_REPO = 'BOSSincrypto/inkdown'
 const CURRENT_VERSION = app.getVersion()
@@ -474,6 +499,7 @@ async function handleOpenFolder(): Promise<void> {
   })
   if (!result.canceled && result.filePaths.length > 0) {
     const folderPath = result.filePaths[0]
+    addToRecentFolders(folderPath)
     const tree = readDirectoryTree(folderPath)
     mainWindow.webContents.send('folder:opened', { folderPath, tree })
   }
@@ -515,10 +541,19 @@ function readDirectoryTree(dirPath: string, depth = 0): FileTreeNode[] {
 }
 
 function addToRecent(filePath: string): void {
-  const index = recentFiles.indexOf(filePath)
-  if (index > -1) recentFiles.splice(index, 1)
-  recentFiles.unshift(filePath)
-  if (recentFiles.length > MAX_RECENT) recentFiles.pop()
+  const idx = recentData.files.indexOf(filePath)
+  if (idx > -1) recentData.files.splice(idx, 1)
+  recentData.files.unshift(filePath)
+  if (recentData.files.length > MAX_RECENT) recentData.files.pop()
+  saveRecent(recentData)
+}
+
+function addToRecentFolders(folderPath: string): void {
+  const idx = recentData.folders.indexOf(folderPath)
+  if (idx > -1) recentData.folders.splice(idx, 1)
+  recentData.folders.unshift(folderPath)
+  if (recentData.folders.length > MAX_RECENT) recentData.folders.pop()
+  saveRecent(recentData)
 }
 
 // IPC Handlers
@@ -583,7 +618,18 @@ ipcMain.handle('folder:read', async (_event, folderPath: string) => {
 })
 
 ipcMain.handle('app:get-recent-files', async () => {
-  return recentFiles
+  return recentData.files
+})
+
+ipcMain.handle('app:get-recent-folders', async () => {
+  return recentData.folders
+})
+
+ipcMain.handle('app:clear-recent', async () => {
+  recentData.files.length = 0
+  recentData.folders.length = 0
+  saveRecent(recentData)
+  return { success: true }
 })
 
 ipcMain.handle('app:get-platform', () => {
@@ -673,6 +719,25 @@ ipcMain.on('window:maximize', () => {
 })
 ipcMain.on('window:close', () => mainWindow?.close())
 ipcMain.handle('window:is-maximized', () => mainWindow?.isMaximized() ?? false)
+ipcMain.on('window:toggle-devtools', () => mainWindow?.webContents.toggleDevTools())
+ipcMain.on('window:zoom-in', () => {
+  if (mainWindow) {
+    const zoom = mainWindow.webContents.getZoomLevel()
+    mainWindow.webContents.setZoomLevel(zoom + 0.5)
+  }
+})
+ipcMain.on('window:zoom-out', () => {
+  if (mainWindow) {
+    const zoom = mainWindow.webContents.getZoomLevel()
+    mainWindow.webContents.setZoomLevel(zoom - 0.5)
+  }
+})
+ipcMain.on('window:zoom-reset', () => mainWindow?.webContents.setZoomLevel(0))
+ipcMain.on('window:toggle-fullscreen', () => {
+  if (mainWindow) {
+    mainWindow.setFullScreen(!mainWindow.isFullScreen())
+  }
+})
 
 app.whenReady().then(createWindow)
 

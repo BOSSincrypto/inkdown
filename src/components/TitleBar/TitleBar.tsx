@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import MenuBar from '../MenuBar/MenuBar'
+import type { TranslationKey } from '../../i18n'
 import './TitleBar.css'
 
 interface TitleBarProps {
@@ -8,11 +9,12 @@ interface TitleBarProps {
   theme: 'light' | 'dark'
   platform: string
   onMenuAction: (action: string) => void
+  t: (key: TranslationKey) => string
 }
 
 const api = window.electronAPI
 
-function TitleBar({ fileName, isModified, platform, onMenuAction }: TitleBarProps) {
+function TitleBar({ fileName, isModified, platform, onMenuAction, t }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false)
   const isMac = platform === 'darwin'
 
@@ -39,7 +41,7 @@ function TitleBar({ fileName, isModified, platform, onMenuAction }: TitleBarProp
             </svg>
           </div>
         )}
-        <MenuBar onAction={onMenuAction} />
+        <MenuBar onAction={onMenuAction} t={t} />
         <span className="titlebar-title">
           {fileName}
           {isModified && <span className="titlebar-modified">*</span>}

@@ -17,7 +17,9 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
 import type { Editor as TiptapEditor } from '@tiptap/core'
+import type { TranslationKey } from '../../i18n'
 import CodeBlock from '../CodeBlock/CodeBlock'
+import { SearchHighlight } from './searchPlugin'
 import './Editor.css'
 
 const lowlight = createLowlight(common)
@@ -26,6 +28,9 @@ interface EditorProps {
   content: string
   markdownContent: string
   sourceMode: boolean
+  spellcheck?: boolean
+  restoreScrollTop?: number
+  t?: (key: TranslationKey) => string
   onContentChange: (editor: TiptapEditor) => void
   onEditorReady: (editor: TiptapEditor) => void
   onSourceChange: (markdown: string) => void
@@ -34,12 +39,17 @@ interface EditorProps {
 function Editor({
   content,
   sourceMode,
+  spellcheck = true,
+  restoreScrollTop,
+  t,
   onContentChange,
   onEditorReady,
   onSourceChange,
 }: EditorProps) {
   const sourceRef = useRef<HTMLTextAreaElement>(null)
   const isExternalUpdate = useRef(false)
+  const restoreScrollTopRef = useRef(restoreScrollTop)
+  restoreScrollTopRef.current = restoreScrollTop
 
   const editor = useEditor({
     extensions: [
@@ -64,7 +74,7 @@ function Editor({
       TableCell,
       TableHeader,
       Placeholder.configure({
-        placeholder: 'Start writing with markdown...',
+        placeholder: t?.('editor.placeholder') || 'Start writing with markdown...',
       }),
       Typography,
       CodeBlockLowlight.extend({
@@ -79,6 +89,7 @@ function Editor({
         transformPastedText: true,
         transformCopiedText: false,
       }),
+      SearchHighlight,
     ],
     content: '',
     onUpdate: ({ editor: ed }) => {
@@ -89,7 +100,7 @@ function Editor({
     editorProps: {
       attributes: {
         class: 'inkdown-editor-content',
-        spellcheck: 'true',
+        spellcheck: String(spellcheck),
       },
     },
   })
@@ -105,6 +116,15 @@ function Editor({
       isExternalUpdate.current = true
       editor.commands.setContent(content)
       isExternalUpdate.current = false
+
+      // Восстанавливаем позицию скролла после обновления контента
+      const targetScroll = restoreScrollTopRef.current
+      if (targetScroll !== undefined && targetScroll >= 0) {
+        requestAnimationFrame(() => {
+          const scrollEl = document.querySelector('.editor-scroll')
+          if (scrollEl) scrollEl.scrollTop = targetScroll
+        })
+      }
     }
   }, [editor, content])
 
@@ -130,7 +150,7 @@ function Editor({
           defaultValue={editor?.storage.markdown.getMarkdown() || ''}
           onChange={handleSourceInput}
           spellCheck
-          placeholder="Write markdown here..."
+          placeholder={t?.('editor.placeholder') || 'Start writing with markdown...'}
         />
       </div>
     )
