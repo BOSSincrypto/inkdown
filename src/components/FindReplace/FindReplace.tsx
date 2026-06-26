@@ -1,16 +1,33 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Editor as TiptapEditor } from '@tiptap/core'
+import type { TranslationKey } from '../../i18n'
+import {
+  buildSearchTx,
+  buildClearTx,
+} from '../Editor/searchPlugin'
 import './FindReplace.css'
 
 interface FindReplaceProps {
   editor: TiptapEditor | null
+  tabId: string
   onClose: () => void
+  t: (key: TranslationKey) => string
 }
 
 interface SearchResult {
   from: number
   to: number
 }
+
+interface TabSearchState {
+  findText: string
+  replaceText: string
+  caseSensitive: boolean
+  showReplace: boolean
+}
+
+// Состояние поиска для каждой вкладки — переживает перемонтирование
+const perTabState = new Map<string, TabSearchState>()
 
 function findAllMatches(editor: TiptapEditor, query: string, caseSensitive: boolean): SearchResult[] {
   if (!query) return []
@@ -31,110 +48,59 @@ function findAllMatches(editor: TiptapEditor, query: string, caseSensitive: bool
   return results
 }
 
-function FindReplace({ editor, onClose }: FindReplaceProps) {
-  const [findText, setFindText] = useState('')
-  const [replaceText, setReplaceText] = useState('')
-  const [caseSensitive, setCaseSensitive] = useState(false)
-  const [showReplace, setShowReplace] = useState(false)
+function FindReplace({ editor, tabId, onClose, t }: FindReplaceProps) {
+  const saved = perTabState.get(tabId)
+  const [findText, setFindText] = useState(saved?.findText ?? '')
+  const [replaceText, setReplaceText] = useState(saved?.replaceText ?? '')
+  const [caseSensitive, setCaseSensitive] = useState(saved?.caseSensitive ?? false)
+  const [showReplace, setShowReplace] = useState(saved?.showReplace ?? false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const findInputRef = useRef<HTMLInputElement>(null)
-  const decorationsApplied = useRef(false)
+  const prevTabIdRef = useRef(tabId)
 
   useEffect(() => {
     findInputRef.current?.focus()
   }, [])
 
-  const clearHighlights = useCallback(() => {
-    if (!editor || !decorationsApplied.current) return
-    const editorEl = editor.view.dom as HTMLElement
-    editorEl.querySelectorAll('.find-highlight, .find-highlight-current').forEach((el) => {
-      const parent = el.parentNode
-      if (parent) {
-        parent.replaceChild(document.createTextNode(el.textContent || ''), el)
-        parent.normalize()
-      }
-    })
-    decorationsApplied.current = false
-  }, [editor])
-
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        clearHighlights()
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, clearHighlights])
+    perTabState.set(tabId, { findText, replaceText, caseSensitive, showReplace })
+  }, [tabId, findText, replaceText, caseSensitive, showReplace])
 
-  const applyHighlights = useCallback(
+  const updateHighlights = useCallback(
     (matches: SearchResult[], activeIdx: number) => {
       if (!editor) return
-      clearHighlights()
-      if (matches.length === 0) return
-
-      for (let i = matches.length - 1; i >= 0; i--) {
-        const match = matches[i]
-        try {
-          editor.view.coordsAtPos(match.from)
-        } catch {
-          continue
-        }
-
-        const domAtPos = editor.view.domAtPos(match.from)
-        const domEndAtPos = editor.view.domAtPos(match.to)
-        if (!domAtPos || !domEndAtPos) continue
-
-        const startNode = domAtPos.node
-        const startOffset = domAtPos.offset
-
-        if (startNode.nodeType === Node.TEXT_NODE) {
-          const textNode = startNode as Text
-          const text = textNode.textContent || ''
-          const matchLen = match.to - match.from
-          const endOffset = startOffset + matchLen
-
-          if (endOffset <= text.length) {
-            const before = text.slice(0, startOffset)
-            const matched = text.slice(startOffset, endOffset)
-            const after = text.slice(endOffset)
-
-            const parent = textNode.parentNode
-            if (!parent) continue
-
-            const frag = document.createDocumentFragment()
-            if (before) frag.appendChild(document.createTextNode(before))
-
-            const span = document.createElement('span')
-            span.className = i === activeIdx ? 'find-highlight-current' : 'find-highlight'
-            span.textContent = matched
-            frag.appendChild(span)
-
-            if (after) frag.appendChild(document.createTextNode(after))
-            parent.replaceChild(frag, textNode)
-            decorationsApplied.current = true
-          }
-        }
-      }
+      editor.view.dispatch(buildSearchTx(editor.view.state, matches, activeIdx))
     },
-    [editor, clearHighlights]
+    [editor]
   )
 
+  const clearHighlights = useCallback(() => {
+    if (!editor) return
+    editor.view.dispatch(buildClearTx(editor.view.state))
+  }, [editor])
+
+  // Скролл к совпадению: setTextSelection + scrollIntoView на транзакции + fallback через DOM
   const scrollToMatch = useCallback(
     (match: SearchResult) => {
       if (!editor) return
-      try {
-        editor.commands.setTextSelection(match)
-        const coords = editor.view.coordsAtPos(match.from)
-        const editorEl = editor.view.dom.closest('.editor-scroll')
-        if (editorEl && coords) {
-          const rect = editorEl.getBoundingClientRect()
-          const scrollTop = editorEl.scrollTop + coords.top - rect.top - rect.height / 3
-          editorEl.scrollTo({ top: scrollTop, behavior: 'smooth' })
-        }
-      } catch { /* ignore scroll errors */ }
+      const { from, to } = match
+
+      // Устанавливаем выделение и скроллим через ProseMirror (без .focus() — фокус остаётся в поле поиска)
+      editor.chain().setTextSelection({ from, to }).scrollIntoView().run()
+
+      // Дополнительный скролл через DOM — центрируем совпадение в верхней трети
+      setTimeout(() => {
+        try {
+          const coords = editor.view.coordsAtPos(from)
+          const scrollEl = document.querySelector('.editor-scroll')
+          if (scrollEl && coords) {
+            const rect = scrollEl.getBoundingClientRect()
+            const target = scrollEl.scrollTop + coords.top - rect.top - rect.height / 3
+            scrollEl.scrollTo({ top: target, behavior: 'smooth' })
+          }
+        } catch { /* позиция может быть недоступна */ }
+      }, 30)
     },
     [editor]
   )
@@ -151,13 +117,70 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
       setResults(matches)
       const idx = matches.length > 0 ? 0 : -1
       setCurrentIndex(idx)
-      applyHighlights(matches, idx)
+      updateHighlights(matches, idx)
       if (matches.length > 0 && idx >= 0) {
         scrollToMatch(matches[idx])
       }
     },
-    [editor, clearHighlights, applyHighlights, scrollToMatch]
+    [editor, clearHighlights, updateHighlights, scrollToMatch]
   )
+
+  // При переключении вкладки: очищаем старую подсветку, восстанавливаем состояние, перезапускаем поиск
+  useEffect(() => {
+    if (prevTabIdRef.current === tabId) return
+    prevTabIdRef.current = tabId
+
+    clearHighlights()
+
+    const restore = perTabState.get(tabId)
+    if (restore) {
+      setFindText(restore.findText)
+      setReplaceText(restore.replaceText)
+      setCaseSensitive(restore.caseSensitive)
+      setShowReplace(restore.showReplace)
+
+      if (restore.findText && editor) {
+        // Ждём пока Editor обновит контент (useEffect в Editor запускается позже)
+        setTimeout(() => {
+          const matches = findAllMatches(editor, restore.findText, restore.caseSensitive)
+          setResults(matches)
+          const idx = matches.length > 0 ? 0 : -1
+          setCurrentIndex(idx)
+          if (matches.length > 0) {
+            updateHighlights(matches, idx)
+            scrollToMatch(matches[idx])
+          }
+        }, 50)
+      } else {
+        setResults([])
+        setCurrentIndex(-1)
+      }
+    } else {
+      setFindText('')
+      setReplaceText('')
+      setCaseSensitive(false)
+      setShowReplace(false)
+      setResults([])
+      setCurrentIndex(-1)
+    }
+  }, [tabId, editor]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Очистка при закрытии панели
+  useEffect(() => {
+    return () => {
+      if (editor) {
+        editor.view.dispatch(buildClearTx(editor.view.state))
+      }
+    }
+  }, [editor])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleFindChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,17 +200,14 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
   const goToMatch = useCallback(
     (direction: 'next' | 'prev') => {
       if (results.length === 0) return
-      let newIdx: number
-      if (direction === 'next') {
-        newIdx = (currentIndex + 1) % results.length
-      } else {
-        newIdx = (currentIndex - 1 + results.length) % results.length
-      }
+      const newIdx = direction === 'next'
+        ? (currentIndex + 1) % results.length
+        : (currentIndex - 1 + results.length) % results.length
       setCurrentIndex(newIdx)
-      applyHighlights(results, newIdx)
+      updateHighlights(results, newIdx)
       scrollToMatch(results[newIdx])
     },
-    [results, currentIndex, applyHighlights, scrollToMatch]
+    [results, currentIndex, updateHighlights, scrollToMatch]
   )
 
   const handleReplace = useCallback(() => {
@@ -211,11 +231,7 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault()
-        if (e.shiftKey) {
-          goToMatch('prev')
-        } else {
-          goToMatch('next')
-        }
+        e.shiftKey ? goToMatch('prev') : goToMatch('next')
       }
     },
     [goToMatch]
@@ -233,7 +249,7 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
           ref={findInputRef}
           type="text"
           className="find-input"
-          placeholder="Find..."
+          placeholder={t('find.placeholder')}
           value={findText}
           onChange={handleFindChange}
           onKeyDown={handleFindKeyDown}
@@ -242,22 +258,22 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
           {results.length > 0
             ? `${currentIndex + 1}/${results.length}`
             : findText
-              ? 'No results'
+              ? t('find.noResults')
               : ''}
         </span>
         <button
           className={`find-btn find-case-btn ${caseSensitive ? 'active' : ''}`}
           onClick={handleCaseSensitiveToggle}
-          title="Case sensitive"
+          title={t('find.caseSensitive')}
         >
           Aa
         </button>
-        <button className="find-btn" onClick={() => goToMatch('prev')} title="Previous (Shift+Enter)">
+        <button className="find-btn" onClick={() => goToMatch('prev')} title={t('find.previous')}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="18 15 12 9 6 15" />
           </svg>
         </button>
-        <button className="find-btn" onClick={() => goToMatch('next')} title="Next (Enter)">
+        <button className="find-btn" onClick={() => goToMatch('next')} title={t('find.next')}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -265,7 +281,7 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
         <button
           className={`find-btn find-expand-btn ${showReplace ? 'active' : ''}`}
           onClick={() => setShowReplace(!showReplace)}
-          title="Toggle Replace"
+          title={t('find.toggleReplace')}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 1l4 4-4 4" />
@@ -274,7 +290,7 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
             <path d="M21 13v2a4 4 0 0 1-4 4H3" />
           </svg>
         </button>
-        <button className="find-btn find-close-btn" onClick={handleClose} title="Close (Esc)">
+        <button className="find-btn find-close-btn" onClick={handleClose} title={t('find.close')}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -286,15 +302,15 @@ function FindReplace({ editor, onClose }: FindReplaceProps) {
           <input
             type="text"
             className="find-input"
-            placeholder="Replace..."
+            placeholder={t('find.replacePlaceholder')}
             value={replaceText}
             onChange={(e) => setReplaceText(e.target.value)}
           />
-          <button className="find-btn replace-btn" onClick={handleReplace} title="Replace">
-            Replace
+          <button className="find-btn replace-btn" onClick={handleReplace} title={t('find.replace')}>
+            {t('find.replace')}
           </button>
-          <button className="find-btn replace-btn" onClick={handleReplaceAll} title="Replace All">
-            All
+          <button className="find-btn replace-btn" onClick={handleReplaceAll} title={t('find.replaceAll')}>
+            {t('find.replaceAll')}
           </button>
         </div>
       )}

@@ -6,12 +6,6 @@ declare global {
     children?: FileTreeNode[]
   }
 
-  interface FileData {
-    filePath: string | null
-    content: string
-    isModified: boolean
-  }
-
   interface Tab {
     id: string
     filePath: string | null
@@ -34,6 +28,8 @@ declare global {
       folderPath: string
     ) => Promise<{ success: boolean; tree?: FileTreeNode[]; error?: string }>
     getRecentFiles: () => Promise<string[]>
+    getRecentFolders: () => Promise<string[]>
+    clearRecent: () => Promise<{ success: boolean }>
     getPlatform: () => Promise<string>
     getVersion: () => Promise<string>
     checkForUpdates: () => Promise<void>
@@ -51,6 +47,11 @@ declare global {
     maximizeWindow: () => void
     closeWindow: () => void
     isMaximized: () => Promise<boolean>
+    toggleDevTools: () => void
+    zoomIn: () => void
+    zoomOut: () => void
+    zoomReset: () => void
+    toggleFullscreen: () => void
     onMenuNewFile: (callback: () => void) => () => void
     onMenuSave: (callback: () => void) => () => void
     onMenuSaveAs: (callback: () => void) => () => void

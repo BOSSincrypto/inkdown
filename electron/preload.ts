@@ -13,6 +13,8 @@ const electronAPI = {
   readFolder: (folderPath: string) => ipcRenderer.invoke('folder:read', folderPath),
 
   getRecentFiles: () => ipcRenderer.invoke('app:get-recent-files'),
+  getRecentFolders: () => ipcRenderer.invoke('app:get-recent-folders'),
+  clearRecent: () => ipcRenderer.invoke('app:clear-recent'),
   getPlatform: () => ipcRenderer.invoke('app:get-platform'),
   getVersion: () => ipcRenderer.invoke('app:get-version'),
   checkForUpdates: () => ipcRenderer.invoke('app:check-updates'),
@@ -29,6 +31,11 @@ const electronAPI = {
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
   closeWindow: () => ipcRenderer.send('window:close'),
   isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+  toggleDevTools: () => ipcRenderer.send('window:toggle-devtools'),
+  zoomIn: () => ipcRenderer.send('window:zoom-in'),
+  zoomOut: () => ipcRenderer.send('window:zoom-out'),
+  zoomReset: () => ipcRenderer.send('window:zoom-reset'),
+  toggleFullscreen: () => ipcRenderer.send('window:toggle-fullscreen'),
 
   onMenuNewFile: (callback: () => void) => {
     ipcRenderer.on('menu:new-file', callback)

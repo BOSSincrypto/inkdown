@@ -18,10 +18,19 @@
   width: 100%;
 }
 
+.editor-area.full-width .editor-wrapper {
+  max-width: 100%;
+  padding: 0 40px;
+}
+
+.editor-area.full-width .editor-scroll {
+  padding: 40px 0;
+}
+
 .inkdown-editor-content {
   outline: none;
   font-family: var(--font-editor);
-  font-size: 16px;
+  font-size: var(--editor-font-size, 16px);
   line-height: 1.75;
   color: var(--text-primary);
   caret-color: var(--accent-color);
