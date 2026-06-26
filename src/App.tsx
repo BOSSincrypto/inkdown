@@ -7,6 +7,9 @@ import Toolbar from './components/Toolbar/Toolbar'
 import StatusBar from './components/StatusBar/StatusBar'
 import ContextMenu from './components/ContextMenu/ContextMenu'
 import FindReplace from './components/FindReplace/FindReplace'
+import Settings, { DEFAULT_SETTINGS } from './components/Settings/Settings'
+import type { SettingsData } from './components/Settings/Settings'
+import { useTranslation } from './i18n'
 import type { Editor as TiptapEditor } from '@tiptap/core'
 
 type Theme = 'light' | 'dark'
@@ -24,7 +27,9 @@ function makeTab(filePath: string | null = null, markdown = ''): Tab {
 
 function App() {
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem('inkdown-theme') as Theme) || 'light'
+    const saved = localStorage.getItem('inkdown-theme') as Theme | null
+    if (saved) return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
@@ -39,10 +44,19 @@ function App() {
   const [folderTree, setFolderTree] = useState<FileTreeNode[]>([])
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
+  const [lineCount, setLineCount] = useState(0)
 
   const editorRef = useRef<TiptapEditor | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showFind, setShowFind] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [fullWidth, setFullWidth] = useState(false)
+  const [settings, setSettings] = useState<SettingsData>(() => {
+    const saved = localStorage.getItem('inkdown-settings')
+    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
+  })
+
+  const { t } = useTranslation(settings.language)
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0]
 
@@ -79,6 +93,37 @@ function App() {
     localStorage.setItem('inkdown-theme', theme)
   }, [theme])
 
+  // Apply settings: theme, font size, spellcheck
+  useEffect(() => {
+    if (settings.theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setTheme(prefersDark ? 'dark' : 'light')
+    } else {
+      setTheme(settings.theme)
+    }
+    document.documentElement.style.setProperty('--editor-font-size', `${settings.fontSize}px`)
+    localStorage.setItem('inkdown-settings', JSON.stringify(settings))
+  }, [settings])
+
+  const handleSaveSettings = useCallback((newSettings: SettingsData) => {
+    setSettings(newSettings)
+  }, [])
+
+  // Auto-save by interval
+  useEffect(() => {
+    if (!settings.autoSave) return
+    const interval = setInterval(() => {
+      if (!editorRef.current || !activeTab.filePath) return
+      const md = editorRef.current.storage.markdown.getMarkdown()
+      if (activeTab.isModified) {
+        api?.writeFile(activeTab.filePath, md).then((result) => {
+          if (result.success) updateActiveTab({ isModified: false, markdown: md })
+        })
+      }
+    }, settings.autoSaveInterval * 1000)
+    return () => clearInterval(interval)
+  }, [settings.autoSave, settings.autoSaveInterval, activeTab.filePath, activeTab.isModified, updateActiveTab])
+
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
   }, [])
@@ -95,6 +140,10 @@ function App() {
     setSourceMode((prev) => !prev)
   }, [])
 
+  const toggleFullWidth = useCallback(() => {
+    setFullWidth((prev) => !prev)
+  }, [])
+
   const switchTab = useCallback(
     (newTabId: string) => {
       if (newTabId === activeTabId) return
@@ -105,10 +154,6 @@ function App() {
       if (tab) {
         setContent(tab.markdown)
         setMarkdownContent(tab.markdown)
-        requestAnimationFrame(() => {
-          const scrollEl = document.querySelector('.editor-scroll')
-          if (scrollEl) scrollEl.scrollTop = tab.scrollTop
-        })
       }
     },
     [activeTabId, tabs, snapshotActiveTab]
@@ -183,7 +228,7 @@ function App() {
   }, [activeTab.filePath, updateActiveTab])
 
   const handleExport = useCallback(
-    async (_event: unknown, format: string) => {
+    async (format: string) => {
       if (!editorRef.current) return
       const htmlContent = editorRef.current.getHTML()
       if (format === 'html') {
@@ -223,9 +268,21 @@ function App() {
       const words = text.trim() ? text.trim().split(/\s+/).length : 0
       setWordCount(words)
       setCharCount(text.length)
+      const lines = editor.state.doc.content.content.length
+      setLineCount(lines)
     },
     [updateActiveTab]
   )
+
+  // Пересчитываем слова/символы/строки при смене файла или загрузке контента
+  useEffect(() => {
+    const trimmed = content.trim()
+    const words = trimmed ? trimmed.split(/\s+/).length : 0
+    setWordCount(words)
+    setCharCount(trimmed.length)
+    const lines = content.split('\n').length
+    setLineCount(lines)
+  }, [content])
 
   const handleEditorReady = useCallback((editor: TiptapEditor) => {
     editorRef.current = editor
@@ -318,6 +375,22 @@ function App() {
         handleFormat(null, action.slice(7))
         return
       }
+      if (action.startsWith('open-recent-file:')) {
+        const filePath = action.slice('open-recent-file:'.length)
+        handleFileSelect(filePath)
+        return
+      }
+      if (action.startsWith('open-recent-folder:')) {
+        const folderPath = action.slice('open-recent-folder:'.length)
+        api?.readFolder(folderPath).then((result) => {
+          if (result.success && result.tree) {
+            setFolderPath(folderPath)
+            setFolderTree(result.tree)
+            setSidebarOpen(true)
+          }
+        })
+        return
+      }
       switch (action) {
         case 'new-file':
           handleNewFile()
@@ -335,10 +408,10 @@ function App() {
           handleSaveAs()
           break
         case 'export-html':
-          handleExport(null, 'html')
+          handleExport('html')
           break
         case 'export-pdf':
-          handleExport(null, 'pdf')
+          handleExport('pdf')
           break
         case 'close-window':
           api?.closeWindow()
@@ -389,7 +462,7 @@ function App() {
           break
         case 'about':
           api?.getVersion().then(v => {
-            alert(`InkDown v${v}\nThe open-source WYSIWYG markdown editor.\n\nhttps://github.com/BOSSincrypto/inkdown`)
+            alert(`${t('about.title')} v${v}\n${t('about.description')}\n${t('about.builtWith')}\n\nhttps://github.com/BOSSincrypto/inkdown`)
           })
           break
         case 'check-updates':
@@ -398,9 +471,49 @@ function App() {
         case 'github':
           api?.openExternal('https://github.com/BOSSincrypto/inkdown')
           break
+        case 'preferences':
+          setShowSettings(true)
+          break
+        case 'shortcuts':
+          alert(
+            `${t('shortcuts.title')}:\n\n` +
+            `Ctrl+T — ${t('shortcuts.newTab')}\n` +
+            `Ctrl+W — ${t('shortcuts.closeTab')}\n` +
+            `Ctrl+S — ${t('shortcuts.save')}\n` +
+            `Ctrl+Shift+S — ${t('shortcuts.saveAs')}\n` +
+            `Ctrl+O — ${t('shortcuts.openFile')}\n` +
+            `Ctrl+Shift+O — ${t('shortcuts.openFolder')}\n` +
+            `Ctrl+Z — ${t('shortcuts.undo')}\n` +
+            `Ctrl+Y — ${t('shortcuts.redo')}\n` +
+            `Ctrl+F — ${t('shortcuts.find')}\n` +
+            `Ctrl+\\ — ${t('shortcuts.toggleSidebar')}\n` +
+            `Ctrl+/ — ${t('shortcuts.sourceMode')}\n` +
+            `Ctrl+Shift+F — ${t('shortcuts.focusMode')}\n` +
+            `Ctrl+Shift+D — ${t('shortcuts.toggleTheme')}\n` +
+            `Ctrl+Tab — ${t('shortcuts.nextTab')}\n` +
+            `Ctrl+Shift+Tab — ${t('shortcuts.prevTab')}\n` +
+            `F11 — ${t('shortcuts.fullscreen')}\n` +
+            `F12 — ${t('shortcuts.devtools')}`
+          )
+          break
+        case 'devtools':
+          api?.toggleDevTools?.()
+          break
+        case 'zoom-in':
+          api?.zoomIn?.()
+          break
+        case 'zoom-out':
+          api?.zoomOut?.()
+          break
+        case 'zoom-reset':
+          api?.zoomReset?.()
+          break
+        case 'toggle-fullscreen':
+          api?.toggleFullscreen?.()
+          break
       }
     },
-    [handleNewFile, handleSave, handleSaveAs, handleExport, handleFormat, closeTab, activeTabId, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme]
+    [handleNewFile, handleSave, handleSaveAs, handleExport, handleFormat, closeTab, activeTabId, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme, t, handleFileSelect]
   )
 
   const handleSourceChange = useCallback((newMarkdown: string) => {
@@ -421,7 +534,43 @@ function App() {
     [handleFormat]
   )
 
-  // Keyboard shortcuts for tabs
+  // Ctrl+Scroll zoom
+  useEffect(() => {
+    const editorEl = document.querySelector('.editor-scroll')
+    if (!editorEl) return
+
+    const handleWheel = (e: Event) => {
+      const we = e as WheelEvent
+      if (we.ctrlKey || we.metaKey) {
+        we.preventDefault()
+        const currentSize = parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue('--editor-font-size') || '16',
+          10
+        )
+        const delta = we.deltaY > 0 ? -1 : 1
+        const newSize = Math.min(32, Math.max(10, currentSize + delta))
+        document.documentElement.style.setProperty('--editor-font-size', `${newSize}px`)
+        setSettings((prev) => ({ ...prev, fontSize: newSize }))
+      }
+    }
+
+    editorEl.addEventListener('wheel', handleWheel, { passive: false })
+    return () => editorEl.removeEventListener('wheel', handleWheel)
+  }, [])
+
+  // Warn before closing with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasUnsaved = tabs.some((t) => t.isModified)
+      if (hasUnsaved) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [tabs])
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const ctrlOrMeta = e.ctrlKey || e.metaKey
@@ -438,11 +587,49 @@ function App() {
           const next = (idx + 1) % tabs.length
           switchTab(tabs[next].id)
         }
+      } else if (ctrlOrMeta && e.key === 's') {
+        e.preventDefault()
+        if (e.shiftKey) {
+          handleSaveAs()
+        } else {
+          handleSave()
+        }
+      } else if (ctrlOrMeta && e.key === 'w') {
+        e.preventDefault()
+        closeTab(activeTabId)
+      } else if (ctrlOrMeta && e.key === 'o') {
+        e.preventDefault()
+        if (e.shiftKey) {
+          api?.openFolder()
+        } else {
+          api?.openFile()
+        }
+      } else if (ctrlOrMeta && e.key === 'f') {
+        e.preventDefault()
+        setShowFind(true)
+      } else if (ctrlOrMeta && e.key === '\\') {
+        e.preventDefault()
+        toggleSidebar()
+      } else if (ctrlOrMeta && e.key === '/') {
+        e.preventDefault()
+        toggleSourceMode()
+      } else if (ctrlOrMeta && e.shiftKey && e.key === 'F') {
+        e.preventDefault()
+        toggleFocusMode()
+      } else if (ctrlOrMeta && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        toggleTheme()
+      } else if (e.key === 'F11') {
+        e.preventDefault()
+        api?.toggleFullscreen?.()
+      } else if (e.key === 'F12') {
+        e.preventDefault()
+        api?.toggleDevTools?.()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleNewFile, closeTab, activeTabId, tabs, switchTab])
+  }, [handleNewFile, handleSave, handleSaveAs, closeTab, activeTabId, tabs, switchTab, toggleSidebar, toggleSourceMode, toggleFocusMode, toggleTheme])
 
   // Register Electron menu listeners
   useEffect(() => {
@@ -451,7 +638,7 @@ function App() {
       api.onMenuNewFile(handleNewFile),
       api.onMenuSave(handleSave),
       api.onMenuSaveAs(handleSaveAs),
-      api.onMenuExport(handleExport),
+      api.onMenuExport((_event, format) => handleExport(format)),
       api.onMenuToggleSidebar(toggleSidebar),
       api.onMenuToggleSource(toggleSourceMode),
       api.onMenuFocusMode(toggleFocusMode),
@@ -509,6 +696,7 @@ function App() {
         theme={theme}
         platform={platform}
         onMenuAction={handleMenuAction}
+        t={t}
       />
 
       <TabBar
@@ -525,6 +713,8 @@ function App() {
           onFormat={handleFormat}
           sourceMode={sourceMode}
           onToggleSource={toggleSourceMode}
+          fullWidth={fullWidth}
+          onToggleFullWidth={toggleFullWidth}
         />
       )}
 
@@ -536,20 +726,27 @@ function App() {
             currentFile={activeTab.filePath}
             onFileSelect={handleFileSelect}
             onOpenFolder={() => api?.openFolder()}
+            editor={editorRef.current}
+            t={t}
           />
         )}
 
-        <div className="editor-area">
+        <div className={`editor-area ${fullWidth ? 'full-width' : ''}`}>
           {showFind && (
             <FindReplace
               editor={editorRef.current}
+              tabId={activeTabId}
               onClose={() => setShowFind(false)}
+              t={t}
             />
           )}
           <Editor
             content={content}
             markdownContent={markdownContent}
             sourceMode={sourceMode}
+            spellcheck={settings.spellcheck}
+            restoreScrollTop={activeTab.scrollTop}
+            t={t}
             onContentChange={handleContentChange}
             onEditorReady={handleEditorReady}
             onSourceChange={handleSourceChange}
@@ -572,6 +769,7 @@ function App() {
         <StatusBar
           wordCount={wordCount}
           charCount={charCount}
+          lineCount={lineCount}
           isModified={activeTab.isModified}
           sourceMode={sourceMode}
           theme={theme}
@@ -579,8 +777,16 @@ function App() {
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
           currentFile={activeTab.filePath}
+          t={t}
         />
       )}
+
+      <Settings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onSave={handleSaveSettings}
+      />
     </div>
   )
 }

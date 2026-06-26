@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react'
+import type { Editor as TiptapEditor } from '@tiptap/core'
+import type { TranslationKey } from '../../i18n'
+import TableOfContents from '../TableOfContents/TableOfContents'
 import './Sidebar.css'
+
+type SidebarTab = 'files' | 'toc'
 
 interface SidebarProps {
   folderPath: string | null
@@ -7,6 +12,8 @@ interface SidebarProps {
   currentFile: string | null
   onFileSelect: (filePath: string) => void
   onOpenFolder: () => void
+  editor: TiptapEditor | null
+  t: (key: TranslationKey) => string
 }
 
 function Sidebar({
@@ -15,29 +22,56 @@ function Sidebar({
   currentFile,
   onFileSelect,
   onOpenFolder,
+  editor,
+  t,
 }: SidebarProps) {
+  const [activeTab, setActiveTab] = useState<SidebarTab>('files')
   const folderName = folderPath ? folderPath.split(/[/\\]/).pop() : null
 
   return (
     <div className="sidebar">
-      <div className="sidebar-header">
-        <span className="sidebar-title">{folderName || 'Explorer'}</span>
-        <button className="sidebar-action" onClick={onOpenFolder} title="Open Folder">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <div className="sidebar-tabs">
+        <button
+          className={`sidebar-tab ${activeTab === 'files' ? 'active' : ''}`}
+          onClick={() => setActiveTab('files')}
+          title={t('sidebar.explorer')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+          </svg>
+        </button>
+        <button
+          className={`sidebar-tab ${activeTab === 'toc' ? 'active' : ''}`}
+          onClick={() => setActiveTab('toc')}
+          title={t('sidebar.toc')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
           </svg>
         </button>
       </div>
 
-      <div className="sidebar-content">
-        {folderTree.length === 0 ? (
-          <div className="sidebar-empty">
-            <p>No folder opened</p>
-            <button className="sidebar-open-btn" onClick={onOpenFolder}>
-              Open Folder
+      {activeTab === 'files' ? (
+        <>
+          <div className="sidebar-header">
+            <span className="sidebar-title">{folderName || t('sidebar.explorer')}</span>
+            <button className="sidebar-action" onClick={onOpenFolder} title={t('sidebar.openFolder')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+              </svg>
             </button>
           </div>
-        ) : (
+
+          <div className="sidebar-content">
+            {folderTree.length === 0 ? (
+              <div className="sidebar-empty">
+                <p>{t('sidebar.noFolder')}</p>
+                <button className="sidebar-open-btn" onClick={onOpenFolder}>
+                  {t('sidebar.openFolder')}
+                </button>
+              </div>
+            ) : (
           <div className="file-tree">
             {folderTree.map((node) => (
               <FileTreeItem
@@ -51,6 +85,10 @@ function Sidebar({
           </div>
         )}
       </div>
+        </>
+      ) : (
+        <TableOfContents editor={editor} t={t} />
+      )}
     </div>
   )
 }

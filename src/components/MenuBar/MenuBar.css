@@ -109,6 +109,47 @@
   z-index: 10001;
 }
 
+.recent-dropdown {
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.menubar-recent-header {
+  padding: 6px 16px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menubar-item.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.menubar-item.disabled:hover {
+  background: none;
+}
+
+.recent-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.menubar-recent-path {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+  margin-left: 8px;
+  flex-shrink: 1;
+}
+
 /* macOS: hide MenuBar (use native menu) */
 .platform-darwin .menubar {
   display: none;

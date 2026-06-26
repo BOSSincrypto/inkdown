@@ -1,8 +1,10 @@
+import type { TranslationKey } from '../../i18n'
 import './StatusBar.css'
 
 interface StatusBarProps {
   wordCount: number
   charCount: number
+  lineCount: number
   isModified: boolean
   sourceMode: boolean
   theme: 'light' | 'dark'
@@ -10,11 +12,13 @@ interface StatusBarProps {
   onToggleSidebar: () => void
   sidebarOpen: boolean
   currentFile: string | null
+  t: (key: TranslationKey, params?: Record<string, number | string>) => string
 }
 
 function StatusBar({
   wordCount,
   charCount,
+  lineCount,
   isModified,
   sourceMode,
   theme,
@@ -22,6 +26,7 @@ function StatusBar({
   onToggleSidebar,
   sidebarOpen,
   currentFile,
+  t,
 }: StatusBarProps) {
   return (
     <div className="statusbar">
@@ -45,18 +50,22 @@ function StatusBar({
       </div>
 
       <div className="statusbar-right">
-        {isModified && <span className="statusbar-modified">Modified</span>}
+        {isModified && <span className="statusbar-modified">{t('statusbar.modified')}</span>}
 
         <span className="statusbar-info">
-          {wordCount} {wordCount === 1 ? 'word' : 'words'}
+          {t('statusbar.words', { count: wordCount })}
         </span>
 
         <span className="statusbar-info">
-          {charCount} {charCount === 1 ? 'char' : 'chars'}
+          {t('statusbar.chars', { count: charCount })}
+        </span>
+
+        <span className="statusbar-info">
+          {t('statusbar.lines', { count: lineCount })}
         </span>
 
         <span className="statusbar-info statusbar-mode">
-          {sourceMode ? 'Source' : 'WYSIWYG'}
+          {sourceMode ? t('statusbar.source') : t('statusbar.wysiwyg')}
         </span>
 
         <button
